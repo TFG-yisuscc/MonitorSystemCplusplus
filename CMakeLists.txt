@@ -3,4 +3,6 @@ project(MonitorSystem)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(MonitorSystem main.cpp)
+include_directories(src/headers)
+
+add_executable(MonitorSystem src/main.cpp)
