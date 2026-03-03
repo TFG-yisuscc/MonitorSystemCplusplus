@@ -1,24 +1,12 @@
-#include "../includes/third_party/ollama.hpp"
+//
+// Created by yisus on 3/3/26.
+//
 
+#include "promptmetrics.h"
 
-#include <iostream>
-#include <string>
-#include <functional>
-#include <thread>
-#include <chrono>
-#include <atomic>
-#include <iomanip>
-#include "../includes/metrics/promptmetrics.h"
-
-
-
-
-std::atomic<bool> done(false);
-// Función auxiliar para mostrar datos de rendimiento
-void print_performance_metrics(const nlohmann::json& response_json)
+/*void print_performance_metrics(const nlohmann::json& response_json)
 {
     std::cout << "\n=== MÉTRICAS DE RENDIMIENTO ===" << std::endl;
-
     // Total duration (duración total en nanosegundos)
     if (response_json.contains("total_duration")) {
         auto total_ns = response_json["total_duration"].get<long long>();
@@ -76,43 +64,24 @@ void print_performance_metrics(const nlohmann::json& response_json)
     }
 
     std::cout << "==============================\n" << std::endl;
-}
+}*/
+namespace metrics {
+    promptmetrics promptmetrics::from_json_ollama(nlohmann::json json,int64_t start_timestamp,int64_t finish_timestamp,int prompt_id = -1) {
+        // Implementación de la función para crear un objeto promptmetrics a partir de un JSON de Ollama
+        // Aquí deberías parsear el JSON y extraer los campos necesarios para construir el objeto promptmetrics
 
-bool on_receive_response(const ollama::response& response)
-{
-    std::cout << response << std::flush;
+        std::string model = json.contains("model")?json["model"].get<std::string>():"DEFAULT_MODEL";
+        int64_t total_duration_ns = json.contains("total_duration")? json["total_duration"].get<int64_t>():-1 ;
+        int64_t prompt_eval_count = json.contains("prompt_eval_count")? json["prompt_eval_count"].get<int64_t>():-1;
+        int64_t prompt_eval_duration_ns = json.contains("prompt_eval_duration")? json["prompt_eval_duration"].get<int64_t>():-1;
+        int64_t eval_count = json.contains("eval_count")? json["eval_count"].get<int64_t>():-1;
+        int64_t eval_duration_ns = json.contains("eval_duration")? json["eval_duration"].get<int64_t>():-1;
+        int64_t load_duration_ns = json.contains("load_duration")? json["load_duration"].get<int64_t>():-1;
+        std::string answer = json.contains("response")? json["response"].get<std::string>():"NONE";
 
-    if (response.as_json()["done"]==true) {
-        done=true;
-        // Mostrar métricas de rendimiento cuando la respuesta esté completa
-        print_performance_metrics(response.as_json());
-        std::cout << std::endl;
+
+        return promptmetrics(start_timestamp, finish_timestamp, model, total_duration_ns,
+                             prompt_eval_count, prompt_eval_duration_ns, eval_count,
+                             eval_duration_ns, load_duration_ns, answer, prompt_id);
     }
-
-    return !done; // Return true to continue streaming this response; return false to stop immediately.
-}
-
-
-int main()
-{
-
-    ollama::show_requests(true);
-    ollama::show_replies(true);
-
-    // Exceptions can be dynamically enabled and disabled through this call.
-    // If exceptions are true, ollama::exception will be thrown in the event of errors. If exceptions are false, functions will either return false or empty values.
-    ollama::allow_exceptions(true);
-
-    ollama::message message1("user", "What are nimbus clouds?");
-    ollama::message message2("assistant", "Nimbus clouds are dense, moisture-filled clouds that produce rain.");
-    ollama::message message3("user", "What are some other kinds of clouds?");
-    int64_t tiinicio = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-     ollama::response respuesta  = ollama::generate("granite4:micro-h",message1);
-    int64_t tfinish = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    std::cout <<on_receive_response(respuesta) << std::endl;
-    std::cout << metrics::promptmetrics::from_json_ollama(respuesta.as_json(),tiinicio,tfinish,-1).<< std::endl;
-
-
-    printf("heeeee");
-
-}
+} // metrics
