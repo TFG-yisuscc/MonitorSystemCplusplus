@@ -1,5 +1,5 @@
 {
-  "dependencies" : [ "fmt", {
+  "dependencies" : [ {
     "name" : "llama-cpp",
     "version>=" : "7146"
   } ]
