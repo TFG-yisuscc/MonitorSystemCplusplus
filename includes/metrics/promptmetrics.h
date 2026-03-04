@@ -20,10 +20,11 @@ namespace metrics {
         int64_t eval_duration_ns;
         int64_t load_duration_ns;
         std::string answer = "NONE";
+        std::string logprobs = "NONE";
         int prompt_id = -1;
         promptmetrics(int64_t start_timestamp_ns, int64_t finish_timestamp_ns, const std::string &model,
             int64_t total_duration_ns, int64_t prompt_eval_count, int64_t prompt_eval_duration_ns, int64_t eval_count,
-            int64_t eval_duration_ns, int64_t load_duration_ns, const std::string &answer, int prompt_id)
+            int64_t eval_duration_ns, int64_t load_duration_ns, const std::string &answer, const std::string logprobs ,int prompt_id)
             : start_timestamp_ns(start_timestamp_ns),
               finish_timestamp_ns(finish_timestamp_ns),
               model(model),
@@ -34,6 +35,7 @@ namespace metrics {
               eval_duration_ns(eval_duration_ns),
               load_duration_ns(load_duration_ns),
               answer(answer),
+              logprobs(logprobs),
               prompt_id(prompt_id) {
         }
 
@@ -41,9 +43,10 @@ namespace metrics {
         static promptmetrics from_json_ollama( nlohmann::json json,int64_t start_timestamp,int64_t finish_timestamp, int prompt_id);
         static promptmetrics from_json_llama(std::string json);
     };
-    // factorias  estaticas
 
-    // conversor a jsonlines
+
+    // conversor a jsonline
+
 
 }
 #endif //MONITORSYSTEM_PROMPTMETRICS_H

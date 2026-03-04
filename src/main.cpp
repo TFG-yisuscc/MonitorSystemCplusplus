@@ -94,23 +94,35 @@ bool on_receive_response(const ollama::response& response)
 
 
 int main()
-{
+{   nlohmann::json opts;
+    opts["options"]["temperature"] = 0;
 
+    ollama::request req("granite4:micro-h",
+                        "¿Cuál es la capital de Francia?",
+                        opts,
+                        false);
+
+    // Añadir campos extra directamente (hereda de json)
+    req["logprobs"] = true;
+    req["verbose"]  = true;
     ollama::show_requests(true);
     ollama::show_replies(true);
 
     // Exceptions can be dynamically enabled and disabled through this call.
     // If exceptions are true, ollama::exception will be thrown in the event of errors. If exceptions are false, functions will either return false or empty values.
     ollama::allow_exceptions(true);
-
-    ollama::message message1("user", "What are nimbus clouds?");
-    ollama::message message2("assistant", "Nimbus clouds are dense, moisture-filled clouds that produce rain.");
-    ollama::message message3("user", "What are some other kinds of clouds?");
-    int64_t tiinicio = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-     ollama::response respuesta  = ollama::generate("granite4:micro-h",message1);
-    int64_t tfinish = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    std::cout <<on_receive_response(respuesta) << std::endl;
-    std::cout << metrics::promptmetrics::from_json_ollama(respuesta.as_json(),tiinicio,tfinish,-1).<< std::endl;
+int64_t tiinicio = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    ollama::response respuesta = ollama::generate(req);
+int64_t tfinish = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    auto pm = metrics::promptmetrics::from_json_ollama(respuesta.as_json(),tiinicio,tfinish,-1);
+    std::cout << "model: " << pm.model << std::endl;
+    std::cout << "answer: " << pm.answer << std::endl;
+    std::cout << "total_duration_ns: " << pm.total_duration_ns << std::endl;
+    std::cout << "prompt_eval_count: " << pm.prompt_eval_count << std::endl;
+    std::cout << "prompt_eval_duration_ns: " << pm.prompt_eval_duration_ns << std::endl;
+    std::cout << "eval_count: " << pm.eval_count << std::endl;
+    std::cout << "eval_duration_ns: " << pm.eval_duration_ns << std::endl;
+    std::cout << "load_duration_ns: " << pm.logprobs << std::endl;
 
 
     printf("heeeee");

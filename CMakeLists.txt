@@ -7,5 +7,7 @@ find_package(nlohmann_json 3.2.0 REQUIRED)
 include_directories(includes)
 add_executable(MonitorSystem src/main.cpp
         includes/metrics/promptmetrics.cpp
-        includes/metrics/promptmetrics.h)
+        includes/metrics/promptmetrics.h
+        src/utils/prompt_utils.cpp
+        src/utils/prompt_utils.h)
 target_link_libraries(MonitorSystem PRIVATE llama nlohmann_json::nlohmann_json)
