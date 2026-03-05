@@ -4,6 +4,8 @@
 
 
 #include "clients/OllamaTest.h"
+
+
 // constructores
 OllamaTest::OllamaTest(std::string model_name, int temperature, int batch_size, int context_size, int seed, int num_prompts)
 {
@@ -54,6 +56,29 @@ ollama::request create_request(const std::string& model_name, const std::string&
 // funciones de test
 bool OllamaTest::runTestType1() {
     //TODO implementar
+    //TODO Revisar o crear el fichero
+    // establecemos el flipath (provisionalmete metrics)
+    std::cout << "Test type1" << std::endl;
+    std::string filepath = "../results/metrics.jsonl";
+    // obtenemos los prompts
+    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    std::vector<std::string> prompts = parser2.getPrompts();
+    // iteramos sobre los prompts
+    for (int i = 0; i < num_prompts_ && i < prompts.size(); i++) {
+        std::string prompt = prompts.at(i);
+        // creamos la request
+        ollama::request req = create_request(model_name_, prompt, temperature_, batch_size_, context_size_, seed_);
+        // enviamos la request y obtenemos la respuesta
+        int64_t tinicio = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        ollama::response response =  ollama::generate(req);
+        int64_t tfinal = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        // LO  CNVETRIMOS EN UN PROMPTETRICS Y LO EJECUTAMOS
+        auto pm = metrics::promptmetrics::from_json_ollama(response.as_json(), tinicio, tfinal, i);
+        pm.write2jsonline(filepath);
+
+    }
     return true;
 }
 bool OllamaTest::runTestType2() {

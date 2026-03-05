@@ -7,8 +7,13 @@
 #include <string>
 #include <stdint.h>
 #include "third_party/ollama.hpp"
+/*
+ * Esta clase combinala estructura de los datos del prompt metrics y el guardado de los mismos en un archivo jsonl,
+ * cada vez que se cree un objeto de esta clase se guardara en el archivo de metrics
+ */
 namespace metrics {
     class promptmetrics {
+
     public:
         int64_t start_timestamp_ns;
         int64_t finish_timestamp_ns;
@@ -56,7 +61,8 @@ namespace metrics {
         ~promptmetrics() = default;
         static promptmetrics from_json_ollama( nlohmann::json json,int64_t start_timestamp,int64_t finish_timestamp, int prompt_id);
         static promptmetrics from_json_llama(std::string json);
-        bool write2jsonline(std::string filepath);
+        bool write2jsonline();
+        bool closefile();// cierra los archivos de metricas
     };
 
 

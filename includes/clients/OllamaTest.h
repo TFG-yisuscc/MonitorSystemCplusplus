@@ -11,6 +11,7 @@
 #include <string>
 #include "third_party/ollama.hpp"
 #include "utils/promptParser.h"
+#include "metrics/promptmetrics.h"
 
 class OllamaTest{
 private:

@@ -26,16 +26,6 @@ namespace metrics {
                              eval_duration_ns, load_duration_ns, answer,logprobs, prompt_id);
     }
     bool promptmetrics::write2jsonline(std::string filepath){
-        nlohmann::json jsonObj = *this;
-        std::ofstream file(filepath, std::ios::app);
-        if (!file.is_open()) {
-            std::cerr << "Error al abrir el archivo: " << filepath << std::endl;
-            return false;
-        }
-        file << jsonObj.dump() << std::endl;
-        file.flush();
-        //file.close();
-        return true;
-    }
+
 }
 // metrics
