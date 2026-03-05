@@ -22,6 +22,20 @@ namespace metrics {
         std::string answer = "NONE";
         std::string logprobs = "NONE";
         int prompt_id = -1;
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(promptmetrics,
+                                       start_timestamp_ns,
+                                       finish_timestamp_ns,
+                                       model,
+                                       total_duration_ns,
+                                       prompt_eval_count,
+                                       prompt_eval_duration_ns,
+                                       eval_count,
+                                       eval_duration_ns,
+                                       load_duration_ns,
+                                       answer,
+                                       logprobs,
+                                       prompt_id);
+
         promptmetrics(int64_t start_timestamp_ns, int64_t finish_timestamp_ns, const std::string &model,
             int64_t total_duration_ns, int64_t prompt_eval_count, int64_t prompt_eval_duration_ns, int64_t eval_count,
             int64_t eval_duration_ns, int64_t load_duration_ns, const std::string &answer, const std::string logprobs ,int prompt_id)
@@ -42,10 +56,11 @@ namespace metrics {
         ~promptmetrics() = default;
         static promptmetrics from_json_ollama( nlohmann::json json,int64_t start_timestamp,int64_t finish_timestamp, int prompt_id);
         static promptmetrics from_json_llama(std::string json);
+        bool write2jsonline(std::string filepath);
     };
 
 
-    // conversor a jsonline
+
 
 
 };

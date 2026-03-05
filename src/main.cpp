@@ -9,7 +9,7 @@
 #include <atomic>
 #include <iomanip>
 #include "../includes/metrics/promptmetrics.h"
-#include "utils/promptParser.h"
+#include "../includes/utils/promptParser.h"
 
 
 std::atomic<bool> done(false);
@@ -95,9 +95,9 @@ bool on_receive_response(const ollama::response& response)
 int main()
 {   nlohmann::json opts;
     opts["options"]["temperature"] = 0;
-
-    ollama::request req("granite4:micro-h",
-                        "¿Cuál es la capital de Francia?",
+    promptParser aux = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    printf(aux.getPromptI(69).c_str());
+    ollama::request req("granite4:micro-h", aux.getPromptI(69),
                         opts,
                         false);
 
@@ -110,6 +110,9 @@ int main()
     // Exceptions can be dynamically enabled and disabled through this call.
     // If exceptions are true, ollama::exception will be thrown in the event of errors. If exceptions are false, functions will either return false or empty values.
     ollama::allow_exceptions(true);
+
+
+
 int64_t tiinicio = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     ollama::response respuesta = ollama::generate(req);
 int64_t tfinish = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -122,8 +125,7 @@ int64_t tfinish = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chro
     std::cout << "eval_count: " << pm.eval_count << std::endl;
     std::cout << "eval_duration_ns: " << pm.eval_duration_ns << std::endl;
     std::cout << "load_duration_ns: " << pm.logprobs << std::endl;
-    promptParser aux = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    pm.write2jsonline("../results/metrics.jsonl");
 
-    printf(aux.getPromptI(0).c_str());
 
 }
