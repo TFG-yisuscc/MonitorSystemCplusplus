@@ -2,10 +2,10 @@
 // Created by yisus on 4/3/26.
 //
 
-#include "prompt_utils.h"
+#include "../../includes/utils/prompt_utils.h"
 
 ollama::request create_request(const std::string& model_name, const std::string& prompt,int temperature, int batch_size, int
-    context_size, int seed)
+                               context_size, int seed)
 {
     nlohmann::json options;
     /*¡¡¡ATENCION!!!!!

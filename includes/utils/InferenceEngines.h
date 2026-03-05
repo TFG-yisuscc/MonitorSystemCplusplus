@@ -1,0 +1,9 @@
+//
+// Created by yisus on 4/3/26.
+//
+
+#ifndef MONITORSYSTEM_INFERENCEENGINES_H
+enum InferenceEngines {LLAMA, OLLAMA, OTHER};
+#define MONITORSYSTEM_INFERENCEENGINES_H
+
+#endif //MONITORSYSTEM_INFERENCEENGINES_H

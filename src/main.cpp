@@ -9,8 +9,7 @@
 #include <atomic>
 #include <iomanip>
 #include "../includes/metrics/promptmetrics.h"
-
-
+#include "utils/promptParser.h"
 
 
 std::atomic<bool> done(false);
@@ -123,8 +122,8 @@ int64_t tfinish = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chro
     std::cout << "eval_count: " << pm.eval_count << std::endl;
     std::cout << "eval_duration_ns: " << pm.eval_duration_ns << std::endl;
     std::cout << "load_duration_ns: " << pm.logprobs << std::endl;
+    promptParser aux = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
 
-
-    printf("heeeee");
+    printf(aux.getPromptI(0).c_str());
 
 }

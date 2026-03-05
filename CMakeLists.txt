@@ -9,5 +9,7 @@ add_executable(MonitorSystem src/main.cpp
         includes/metrics/promptmetrics.cpp
         includes/metrics/promptmetrics.h
         src/utils/prompt_utils.cpp
-        src/utils/prompt_utils.h)
+        includes/utils/prompt_utils.h
+        includes/utils/InferenceEngines.h
+        src/utils/promptParser.h)
 target_link_libraries(MonitorSystem PRIVATE llama nlohmann_json::nlohmann_json)

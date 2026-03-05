@@ -48,5 +48,5 @@ namespace metrics {
     // conversor a jsonline
 
 
-}
+};
 #endif //MONITORSYSTEM_PROMPTMETRICS_H
