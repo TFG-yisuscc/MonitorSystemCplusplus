@@ -6,7 +6,7 @@
 
 
 namespace metrics {
-    promptmetrics promptmetrics::from_json_ollama(nlohmann::json json,int64_t start_timestamp,int64_t finish_timestamp,int prompt_id = -1) {
+    promptmetrics promptmetrics::from_Ollama_json(nlohmann::json json,int64_t start_timestamp,int64_t finish_timestamp,int prompt_id = -1) {
         // Implementación de la función para crear un objeto promptmetrics a partir de un JSON de Ollama
         // Aquí deberías parsear el JSON y extraer los campos necesarios para construir el objeto promptmetrics
 
@@ -20,12 +20,10 @@ namespace metrics {
         std::string answer = json.contains("response")? json["response"].get<std::string>():"NONE";
         std::string logprobs = json.contains("logprobs")? json["logprobs"].dump():"NONE";
 
-
-        return promptmetrics(start_timestamp, finish_timestamp, model, total_duration_ns,
+        //TODO REHACER
+        return promptmetrics(start_timestamp, finish_timestamp, model,InferenceEngines::OLLAMA, total_duration_ns,
                              prompt_eval_count, prompt_eval_duration_ns, eval_count,
                              eval_duration_ns, load_duration_ns, answer,logprobs, prompt_id);
     }
-    bool promptmetrics::write2jsonline(std::string filepath){
-
 }
 // metrics

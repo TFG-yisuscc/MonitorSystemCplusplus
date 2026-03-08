@@ -19,6 +19,7 @@ public:
     promptmetriclogger(std::string filepath);
     ~promptmetriclogger();
     bool write2jsonline(metrics::promptmetrics pm);
+
 };
 
 

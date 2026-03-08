@@ -103,7 +103,7 @@ int main(){
 //                         false);
 //
 //     // Añadir campos extra directamente (hereda de json)
-//     req["logprobs"] = true;
+//     req["tokenProb"] = true;
 //     req["verbose"]  = true;
 //     ollama::show_requests(true);
 //     ollama::show_replies(true);
@@ -125,7 +125,7 @@ int main(){
 //     std::cout << "prompt_eval_duration_ns: " << pm.prompt_eval_duration_ns << std::endl;
 //     std::cout << "eval_count: " << pm.eval_count << std::endl;
 //     std::cout << "eval_duration_ns: " << pm.eval_duration_ns << std::endl;
-//     std::cout << "load_duration_ns: " << pm.logprobs << std::endl;
+//     std::cout << "load_duration_ns: " << pm.tokenProb << std::endl;
 //     pm.write2jsonline("../results/metrics.jsonl");
  OllamaTest ot = OllamaTest("granite4:micro-h",0,512,2048,42,3);
     ot.runTestType1();

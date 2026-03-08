@@ -75,7 +75,7 @@ bool OllamaTest::runTestType1() {
         int64_t tfinal = std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::high_resolution_clock::now().time_since_epoch()).count();
         // LO  CNVETRIMOS EN UN PROMPTETRICS Y LO EJECUTAMOS
-        auto pm = metrics::promptmetrics::from_json_ollama(response.as_json(), tinicio, tfinal, i);
+        auto pm = metrics::promptmetrics::from_Ollama_json(response.as_json(), tinicio, tfinal, i);
         pm.write2jsonline(filepath);
 
     }
