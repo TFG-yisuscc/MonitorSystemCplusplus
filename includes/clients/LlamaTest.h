@@ -1,5 +1,7 @@
 //
 // Created by yisus on 5/3/26.
+//Tengo un problema, digiere bastante en como es con la
+//libreria de python
 //
 
 #ifndef MONITORSYSTEM_LLAMATEST_H

@@ -55,9 +55,7 @@ ollama::request create_request(const std::string& model_name, const std::string&
 }
 // funciones de test
 bool OllamaTest::runTestType1() {
-    //TODO implementar
-    //TODO Revisar o crear el fichero
-    // establecemos el flipath (provisionalmete metrics)
+    //TODO implementar el logger
     std::cout << "Test type1" << std::endl;
     std::string filepath = "../results/metrics.jsonl";
     // obtenemos los prompts
@@ -76,7 +74,7 @@ bool OllamaTest::runTestType1() {
             std::chrono::high_resolution_clock::now().time_since_epoch()).count();
         // LO  CNVETRIMOS EN UN PROMPTETRICS Y LO EJECUTAMOS
         auto pm = metrics::promptmetrics::from_Ollama_json(response.as_json(), tinicio, tfinal, i);
-        pm.write2jsonline(filepath);
+        //pm.write2jsonline(filepath);
 
     }
     return true;

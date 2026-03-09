@@ -14,10 +14,15 @@ add_executable(MonitorSystem src/main.cpp
         includes/clients/OllamaTest.h
         includes/metrics/promptmetriclogger.cpp
         includes/metrics/promptmetriclogger.h
-        includes/clients/LlamaTest.cpp
+        src/clients/LlamaTest.cpp
         includes/clients/LlamaTest.h
         includes/metrics/hardwareMetrics.cpp
         includes/metrics/hardwareMetrics.h
         includes/metrics/promptmetricsLlama.h
-        includes/utils/ProbabilityType.h)
+        includes/utils/ProbabilityType.h
+        includes/clients/LlamaServerTest.cpp
+        includes/clients/LlamaServerTest.h
+        includes/utils/LlamaAux.cpp
+        includes/utils/LlamaAux.h
+        src/main.cpp)
 target_link_libraries(MonitorSystem PRIVATE llama nlohmann_json::nlohmann_json)

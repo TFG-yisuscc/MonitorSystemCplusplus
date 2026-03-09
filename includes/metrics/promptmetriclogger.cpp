@@ -30,4 +30,4 @@ bool promptmetriclogger::write2jsonline(metrics::promptmetrics pm) {
     //file.close();
     return true;
 }
-}
+

@@ -2,7 +2,7 @@
 // Created by yisus on 5/3/26.
 //
 
-#include "LlamaTest.h"
+#include "../../includes/clients/LlamaTest.h"
 
 LlamaTest::LlamaTest(std::string model_path, int temperature, int batch_size, int context_size, int seed, int num_prompts) {
     model_path_ = model_path;
@@ -28,7 +28,7 @@ bool LlamaTest::runTestType1() {
     llama_backend_init();
     // configuaracion y seleccion del modelo
     llama_model_params model_params = llama_model_default_params();
-    llama_model* model = llama_load_model_from_file(model_path_.c_str(), model_params);
+    llama_model* model = llama_model_load_from_file(model_path_.c_str(), model_params);
     if (!model) {
         llama_backend_free();
         return false;
@@ -39,9 +39,9 @@ bool LlamaTest::runTestType1() {
     ctx_params.n_batch = batch_size_;
     //ctx_params.seed = seed_; no es aquí
 
-    llama_context* ctx = llama_new_context_with_model(model, ctx_params);
+    llama_context* ctx = llama_init_from_model(model, ctx_params);
     if (!ctx) {
-        llama_free_model(model);
+        llama_model_free(model);
         llama_backend_free();
         return false;
     }
@@ -50,6 +50,6 @@ bool LlamaTest::runTestType1() {
 
 
     // ejecucion del test de llma  model
-
+return true;
 
 }
