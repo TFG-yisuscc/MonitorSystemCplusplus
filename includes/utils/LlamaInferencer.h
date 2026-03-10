@@ -10,7 +10,7 @@
 #include <vector>
 
 /**
- * LlamaAux - Clase auxiliar que encapsula el ciclo de vida completo de un modelo llama.cpp:
+ * LlamaInferencer - Clase auxiliar que encapsula el ciclo de vida completo de un modelo llama.cpp:
  *  - Inicialización del backend
  *  - Carga del modelo y sus parámetros
  *  - Creación y destrucción del contexto
@@ -39,7 +39,7 @@ struct  LlamaLoadTimestamps {
     int64_t finContextCreate;
 
 };
-class LlamaAux {
+class LlamaInferencer {
 public:
     // -------------------------------------------------------------------------
     // Parámetros de configuración
@@ -62,7 +62,7 @@ private:
     // Constructor / Destructor
     // -------------------------------------------------------------------------
 public:
-    LlamaAux(const std::string &model_path, int temperature, int batch_size, int context_size, int seed,
+    LlamaInferencer(const std::string &model_path, int temperature, int batch_size, int context_size, int seed,
         int num_prompts)
         : model_path_(model_path),
           temperature_(temperature),
@@ -71,7 +71,7 @@ public:
           seed_(seed),
           num_prompts_(num_prompts) {//TODO ELIMinar numero de Prompts porque no atañe a esta clase
     }
-    ~LlamaAux();
+    ~LlamaInferencer();
     LlamaLoadTimestamps loadModel();
     LlamaGenerateResult generateTextCompletion(std::string prompt);
     bool unloadModel();

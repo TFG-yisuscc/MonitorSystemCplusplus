@@ -2,7 +2,7 @@
 // Created by yisus on 8/3/26.
 //
 
-#include "LlamaAux.h"
+#include "LlamaInferencer.h"
 
 #include <chrono>
 #include <stdexcept>
@@ -11,13 +11,17 @@
 // =============================================================================
 // Constructor / Destructor
 // =============================================================================
+//TODO ajustar todos los paramtros de inferencia para que sea lo mas identico a ollama posible
+// Incluir en los parametros ajustables por el usuario los parametros de sampleo (aunque en teoria son "fijos").
+// mas alla de la temperatura, el top-p y el top-k,
+// puesto que estos no aparencen en el .gguf
 
 
-LlamaAux::~LlamaAux() {
+LlamaInferencer::~LlamaInferencer() {
 
 }
 
-LlamaLoadTimestamps LlamaAux::loadModel() {
+LlamaLoadTimestamps LlamaInferencer::loadModel() {
     /* NO CARGA SOLAMENTE EL MODELO
      * 1)Inicicializa el backend
      * 2) Carga el modelo y sus parámetros
@@ -56,13 +60,21 @@ LlamaLoadTimestamps LlamaAux::loadModel() {
     this->sampler_ = llama_sampler_chain_init(
         llama_sampler_chain_default_params()
     );
+    llama_sampler_chain_add(this->sampler_,
+    llama_sampler_init_penalties(
+        64,     // repeat_last_n
+        1.3f,   // repeat_penalty
+        0.1f,   // frequency_penalty
+        0.1f    // presence_penalty
+    )
+);
      llama_sampler_chain_add(this->sampler_, llama_sampler_init_temp(this->temperature_));
      llama_sampler_chain_add(this->sampler_, llama_sampler_init_dist(this->seed_));
     this->initialized_ = true;
     return res;
 }
 
- LlamaGenerateResult LlamaAux::generateTextCompletion(std::string prompt) {
+ LlamaGenerateResult LlamaInferencer::generateTextCompletion(std::string prompt) {
 
     /* 1) Tokeniza el answer
      * 2) Crea batch y evalúa el answer
@@ -98,6 +110,7 @@ LlamaLoadTimestamps LlamaAux::loadModel() {
 
     //2 crear batch y prefill
     llama_perf_context_reset(this->ctx_);
+
     llama_batch batch = llama_batch_get_one(tokens.data(), tokens.size());
     llama_decode(this->ctx_, batch);
     //3 bucle de generación (sampling)
@@ -124,12 +137,13 @@ LlamaLoadTimestamps LlamaAux::loadModel() {
     res.probabilidades = ""; //TODO sacar las probabilidades de cada token generado
     res.perfTimings = llama_perf_context(this->ctx_);
     // reseteo de los perf y cxt
+    llama_memory_clear(llama_get_memory(this->ctx_), true);
         llama_perf_context_reset(this->ctx_);
         llama_sampler_reset(this->sampler_);
     return res;
 }
 
-bool LlamaAux::unloadModel() {
+bool LlamaInferencer::unloadModel() {
     if (this->ctx_) {
         llama_free(this->ctx_);
         this->ctx_ = nullptr;

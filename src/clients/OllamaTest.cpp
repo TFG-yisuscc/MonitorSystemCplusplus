@@ -55,7 +55,6 @@ ollama::request create_request(const std::string& model_name, const std::string&
 }
 // funciones de test
 bool OllamaTest::runTestType1() {
-    //TODO implementar el logger
     std::cout << "Test type1" << std::endl;
     std::string filepath = "../results/metrics.jsonl";
     // obtenemos los prompts
