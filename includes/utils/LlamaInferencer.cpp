@@ -5,9 +5,13 @@
 #include "LlamaInferencer.h"
 
 #include <chrono>
+#include <cmath>
 #include <stdexcept>
 #include <cstring>
-
+/*
+ *Dado el bajo nivel de abstraccion que presenta la biblioteca de llama.h
+ * Para facilitar su uso, se ha creado esta clase que abstrae su uso
+ */
 // =============================================================================
 // Constructor / Destructor
 // =============================================================================
@@ -15,10 +19,10 @@
 // Incluir en los parametros ajustables por el usuario los parametros de sampleo (aunque en teoria son "fijos").
 // mas alla de la temperatura, el top-p y el top-k,
 // puesto que estos no aparencen en el .gguf
-
+// https://github.com/ollama/ollama/blob/61086083eb8c558bc14c61d6df630c3bf6e690b4/api/types.go
 
 LlamaInferencer::~LlamaInferencer() {
-
+    unloadModel();
 }
 
 LlamaLoadTimestamps LlamaInferencer::loadModel() {
@@ -28,8 +32,8 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
      * 3) Crea el contexto de inferencia
      * 4) Configura el sampler
      */
-    //TODO  meterlos enlos metodos de cada funcion
-    LlamaLoadTimestamps res;
+
+    LlamaLoadTimestamps res{};
     res.inicioBackendInit = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     llama_backend_init();
     res.finBackendInit = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -53,6 +57,7 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
     ctx_params.n_ctx    = this->context_size_;  // tamaño del contexto
     ctx_params.n_batch  = this->batch_size_;   // batch de procesamiento
     ctx_params.no_perf  = false;
+
     this->ctx_ = llama_init_from_model(this->model_, ctx_params);
     res.finContextCreate = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     // Obtener vocabulario
@@ -62,12 +67,12 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
     );
     llama_sampler_chain_add(this->sampler_,
     llama_sampler_init_penalties(
-        64,     // repeat_last_n
-        1.3f,   // repeat_penalty
-        0.1f,   // frequency_penalty
-        0.1f    // presence_penalty
-    )
-);
+        this->repeat_last_n_,
+        this->repeat_penalty_,
+        this->frequency_penalty_,
+        this->presence_penalty_
+     )
+    );
      llama_sampler_chain_add(this->sampler_, llama_sampler_init_temp(this->temperature_));
      llama_sampler_chain_add(this->sampler_, llama_sampler_init_dist(this->seed_));
     this->initialized_ = true;
@@ -85,9 +90,11 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
     if (!this->initialized_) {
         throw std::runtime_error("Modelo no inicializado. Llama a loadModel() antes de generar texto.");
     }
+    reset();
     LlamaGenerateResult res;
+    res.inicioPrefill = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     //1 tokenizo el answer (no se si es exacto?)
-    int n_tokens = -llama_tokenize(
+    int n_tokens = -llama_tokenize( // este es para obtener el tamaño exacto y no mas de tokenes
         this->vocab_,
         prompt.c_str(),
         prompt.size(),
@@ -108,20 +115,28 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
         false
     );
 
-    //2 crear batch y prefill
-    llama_perf_context_reset(this->ctx_);
-
     llama_batch batch = llama_batch_get_one(tokens.data(), tokens.size());
     llama_decode(this->ctx_, batch);
+    res.finPrefill = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    res.inicioDecode = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     //3 bucle de generación (sampling)
     int n_cur = tokens.size();
-    int n_max = 512; // máximo de tokens a generar
+    size_t n_max =    this->max_tokens_ <0 ? this->context_size_ - tokens.size(): this->max_tokens_;
     std::string generated_text;
+    std::vector<float> probs;
     while (n_cur < n_max) {
         llama_token token_id = llama_sampler_sample(this->sampler_, this->ctx_, -1);
         // Verificar fin de secuencia
         if (llama_vocab_is_eog(this->vocab_, token_id)) break;
-        // Convertir token a texto e imprimir
+        //
+        const float* logits = llama_get_logits_ith(this->ctx_, -1);
+        int n_vocab = llama_vocab_n_tokens(this->vocab_);
+        float max_logit = *std::max_element(logits, logits + n_vocab);
+        float sum = 0.0f;
+        for (int i = 0; i < n_vocab; i++)
+            sum += std::exp(logits[i] - max_logit);// ver si merece la pena hacer esto para evitar overflow
+        float prob = std::exp(logits[token_id] - max_logit) / sum;
+        probs.push_back(prob);
         char buf[256];
         int n = llama_token_to_piece(this->vocab_, token_id, buf, sizeof(buf), 0, false);
         if (n > 0) {
@@ -129,17 +144,17 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
             generated_text += buf;
         }
         // Evaluar el token generado
-        batch = llama_batch_get_one(&token_id, 1);
+        batch = llama_batch_get_one(&token_id, 1);// no lo recomienda la api de llama
+       // calcular probibilidad de generacion
+
         if (llama_decode(this->ctx_, batch) != 0) break;
         n_cur++;
     }
+    res.finDecode = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    res.probabilidades = probs;
     res.answer = generated_text;
-    res.probabilidades = ""; //TODO sacar las probabilidades de cada token generado
     res.perfTimings = llama_perf_context(this->ctx_);
-    // reseteo de los perf y cxt
-    llama_memory_clear(llama_get_memory(this->ctx_), true);
-        llama_perf_context_reset(this->ctx_);
-        llama_sampler_reset(this->sampler_);
+
     return res;
 }
 
@@ -158,4 +173,10 @@ bool LlamaInferencer::unloadModel() {
     }
     this->initialized_ = false;
     return true;
+}
+
+void LlamaInferencer::reset() {
+    llama_memory_clear(llama_get_memory(this->ctx_), true);
+    llama_perf_context_reset(this->ctx_);
+    llama_sampler_reset(this->sampler_);
 }
