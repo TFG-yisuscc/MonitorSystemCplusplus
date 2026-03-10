@@ -8,6 +8,7 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <stdint.h>
 
 /**
  * LlamaInferencer - Clase auxiliar que encapsula el ciclo de vida completo de un modelo llama.cpp:
@@ -21,7 +22,7 @@
 
 struct LlamaGenerateResult{
     std::string answer;
-    std::string probabilidades;
+    std::vector<float> probabilidades;
     llama_perf_context_data perfTimings;
     int64_t inicioPrefill;
     int64_t finPrefill;
@@ -49,7 +50,11 @@ public:
     int batch_size_;
     int context_size_;
     int seed_;
-    int num_prompts_;
+    int max_tokens_ = -1;// delimitado por el tamaño de contexto
+    int32_t repeat_last_n_ = 64;
+    float repeat_penalty_ = 1.3f;
+    float frequency_penalty_ = 0.1f;
+    float presence_penalty_ = 0.1f;
     bool initialized_ = false;
 private:
     llama_model* model_ = nullptr;
@@ -68,8 +73,7 @@ public:
           temperature_(temperature),
           batch_size_(batch_size),
           context_size_(context_size),
-          seed_(seed),
-          num_prompts_(num_prompts) {//TODO ELIMinar numero de Prompts porque no atañe a esta clase
+          seed_(seed) {
     }
     ~LlamaInferencer();
     LlamaLoadTimestamps loadModel();
@@ -79,7 +83,8 @@ private:
     bool initializeBackend();
     bool createContext();
     bool setupSampler();
-    bool reset();
+
+    void reset();
 
 };
 #endif //MONITORSYSTEM_LLAMAAUX_H
