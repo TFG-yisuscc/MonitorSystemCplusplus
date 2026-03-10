@@ -3,12 +3,12 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "utils/LlamaAux.h"
+#include "utils/LlamaInferencer.h"
 
 int main(int argc, char *argv[]) {
 
     //probanmos cone largumento de los gatitos bonitos
-    LlamaAux prueba = LlamaAux( "/home/yisus/Descargas/tinyllama-1.1b-chat-v1.0.Q4_0.gguf", 0.8, 512, 1024, 42, 1);
+    LlamaInferencer prueba = LlamaInferencer( "/home/yisus/Descargas/tinyllama-1.1b-chat-v1.0.Q4_0.gguf", 0.8, 512, 1024, 42, 1);
 
     LlamaLoadTimestamps llt = prueba.loadModel();
     std::cout << "Tiempo de inicialización del backend: " << (llt.finBackendInit - llt.inicioBackendInit) << " ns" << std::endl;
