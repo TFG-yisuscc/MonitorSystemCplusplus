@@ -22,7 +22,7 @@ add_executable(MonitorSystem src/main.cpp
         includes/utils/ProbabilityType.h
         includes/clients/LlamaServerTest.cpp
         includes/clients/LlamaServerTest.h
-        includes/utils/LlamaInferencer.cpp
+        src/utils/LlamaInferencer.cpp
         includes/utils/LlamaInferencer.h
         src/main.cpp)
 target_link_libraries(MonitorSystem PRIVATE llama nlohmann_json::nlohmann_json)

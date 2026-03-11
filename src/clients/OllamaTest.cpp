@@ -4,6 +4,7 @@
 
 
 #include "clients/OllamaTest.h"
+#include <nlohmann/json.hpp>
 
 
 // constructores

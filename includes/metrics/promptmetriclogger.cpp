@@ -4,6 +4,8 @@
 
 #include "promptmetriclogger.h"
 
+#include <iostream>
+
 promptmetriclogger::promptmetriclogger(std::string filepath) {
     filepath_ = filepath;
     logfile_.open(filepath_, std::ios::app);
