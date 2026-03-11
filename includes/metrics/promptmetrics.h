@@ -6,7 +6,7 @@
 #define MONITORSYSTEM_PROMPTMETRICS_H
 #include <string>
 #include <stdint.h>
-#include <nlohmann/json.hpp>
+#include "third_party/ollama.hpp"
 #include "utils/InferenceEngines.h"
 #include "utils/ProbabilityType.h"
 /*

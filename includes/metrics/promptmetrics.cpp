@@ -6,7 +6,8 @@
 
 
 namespace metrics {
-    promptmetrics promptmetrics::from_Ollama_json(nlohmann::json json,int64_t start_timestamp,int64_t finish_timestamp,int prompt_id) {
+    promptmetrics promptmetrics::from_Ollama_json(nlohmann::json json, int64_t start_timestamp,
+                                                  int64_t finish_timestamp, int prompt_id) {
         // Implementación de la función para crear un objeto promptmetrics a partir de un JSON de Ollama
         // Aquí deberías parsear el JSON y extraer los campos necesarios para construir el objeto promptmetrics
 

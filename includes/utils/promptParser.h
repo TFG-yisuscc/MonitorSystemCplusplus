@@ -13,8 +13,8 @@
 #include <vector>
 #include <stdexcept>
 
-#include "third_party/ollama.hpp"
-
+// #include "third_party/ollama.hpp"
+#include <nlohmann/json.hpp>
 
 class promptParser {
 private:
