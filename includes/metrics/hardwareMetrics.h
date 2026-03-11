@@ -5,11 +5,20 @@
 #ifndef MONITORSYSTEM_HARDWAREMETRICS_H
 #define MONITORSYSTEM_HARDWAREMETRICS_H
 #include <cstdint>
+#include <string>
+#include <unistd.h>
 #include "utils/InferenceEngines.h"
 #include <nlohmann/json.hpp>
+
 class hardwareMetrics {
 private:
-    static  InferenceEngines engine_;
+    InferenceEngines engine_;   // ← quitar static
+
+    void fetchMemoryMetrics();
+    void fetchCpuMetrics();
+    void fetchSystemMetrics();
+    double getCpuUsageForPid(pid_t pid);
+    pid_t getEnginePid() const;
 
 public:
     int64_t timestamp_;
@@ -50,6 +59,14 @@ public:
                                    cpu_usage_,
                                    cpu_usage_engine_,
                                    engine_);
+
+    // constructor y destructor
+    hardwareMetrics(const InferenceEngines engine);
+    // actualiza
+     void update();
+    // setters y getters
+        InferenceEngines getEngine() const;
+        void setEngine(const InferenceEngines &engine);
 };
 
 
