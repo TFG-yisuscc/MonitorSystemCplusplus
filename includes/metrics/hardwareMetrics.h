@@ -1,7 +1,7 @@
 //
 // Created by yisus on 5/3/26.
 //
-
+#pragma once
 #ifndef MONITORSYSTEM_HARDWAREMETRICS_H
 #define MONITORSYSTEM_HARDWAREMETRICS_H
 #include <cstdint>
@@ -9,10 +9,12 @@
 #include <unistd.h>
 #include "utils/InferenceEngines.h"
 #include <nlohmann/json.hpp>
+#include <sys/resource.h>
+#include "utils/cpuMonitor.h"
 
 class hardwareMetrics {
 private:
-    InferenceEngines engine_;   // ← quitar static
+    InferenceEngines engine_;
 
     void fetchMemoryMetrics();
     void fetchCpuMetrics();
@@ -41,6 +43,8 @@ public:
     //cpu
     double cpu_usage_;
     double cpu_usage_engine_;
+    cpu_ticks cpu_ticks_;
+    cpu_ticks cpu_ticks_engine_;// TODO mejorar esta parte
     // el conversor a json
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(hardwareMetrics,
                                    timestamp_,
@@ -58,6 +62,7 @@ public:
                                    swap_percent_,
                                    cpu_usage_,
                                    cpu_usage_engine_,
+                                   cpu_ticks_,
                                    engine_);
 
     // constructor y destructor

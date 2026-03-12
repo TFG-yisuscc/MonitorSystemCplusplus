@@ -24,5 +24,8 @@ add_executable(MonitorSystem src/main.cpp
         includes/clients/LlamaServerTest.h
         src/utils/LlamaInferencer.cpp
         includes/utils/LlamaInferencer.h
-        src/main.cpp)
+        src/main.cpp
+        includes/utils/cpuMonitor.h
+        includes/utils/cpuTicks.h
+)
 target_link_libraries(MonitorSystem PRIVATE llama nlohmann_json::nlohmann_json)
