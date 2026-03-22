@@ -35,10 +35,9 @@ int main(int argc, char *argv[]) {
     hardwareMetrics hm = hardwareMetrics(InferenceEngines::OLLAMA);
     printf(std::to_string(hm.timestamp_).c_str());
     hm.update();
+    hm.json
     printf(std::to_string(hm.timestamp_).c_str());
     printf("\rn");
-    printf(std::to_string(hm.throttling_).c_str());
-    printf("\rn");
-    printf(std::to_string(hm.throttling_).c_str());
-    printf("\rn");
+
+
 }

@@ -6,14 +6,14 @@
 #define MONITORSYSTEM_CPUMONITOR_H
 #include <fstream>
 #include "utils/cpuTicks.h"
+#include <unistd.h>
 
-
-class CpuMonitor {
+class CpuMonitor {// no sde si me merece la pena organizarla en un a clase aparte
 public:
     static double getSystemCpuPercent() {
 
         static cpu_ticks ct_prev{};
-        cpu_ticks actual = readCpuTimes();
+        cpu_ticks actual = getCpuTimes();
 
         double cpu_percent = 0.0;
         int64_t total_diff = actual.total() - ct_prev.total();
@@ -24,10 +24,7 @@ public:
         ct_prev = actual;
         return cpu_percent;
     }
-    double getEngineCpuPercent() {
-        //TODO
-        return 0.0;
-    }
+
 };
 
 

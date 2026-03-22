@@ -6,5 +6,8 @@
   }, {
     "name" : "llama-cpp",
     "version>=" : "7146"
+  }, {
+    "name" : "fmt",
+    "version>=" : "12.1.0"
   } ]
 }

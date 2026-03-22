@@ -23,7 +23,10 @@ struct  cpu_ticks {
         return user + nice + system + irq + softirq + steal;
     }
 };
-inline cpu_ticks readCpuTimes() {
+struct cpu_ticks_pid {
+
+};
+inline cpu_ticks getCpuTimes() {
     cpu_ticks ct{0, 0, 0, 0, 0, 0, 0, 0};
     std::ifstream file("/proc/stat");
     std::string cpu;
@@ -36,5 +39,12 @@ inline cpu_ticks readCpuTimes() {
     }
     return ct;
 }
-
+inline cpu_ticks getCpuTimesPid(pid_t pid) {
+    //TODO tiempos de cpu por proceso
+    return cpu_ticks{0, 0, 0, 0, 0, 0, 0, 0};
+}
+inline cpu_ticks getCpuTimesUser(pid_t pid) {
+    //TODO tiempos de cpu en modo usuario por proceso
+    return cpu_ticks{0, 0, 0, 0, 0, 0, 0, 0};
+}
 #endif //MONITORSYSTEM_CPUTICKS_H

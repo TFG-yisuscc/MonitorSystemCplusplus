@@ -12,38 +12,34 @@
 #include <sys/resource.h>
 #include "utils/cpuMonitor.h"
 
+struct throttlingInfo {
+    bool under_voltage;
+    bool freq_capped;
+    bool throttled;
+    bool soft_throttled;
+    // otros bits de throttling pueden ser añadidos aquí
+};
 class hardwareMetrics {
-private:
-    InferenceEngines engine_;
-
-    void fetchMemoryMetrics();
-    void fetchCpuMetrics();
-    void fetchSystemMetrics();
-    double getCpuUsageForPid(pid_t pid);
-    pid_t getEnginePid() const;
-
 public:
-    int64_t timestamp_;
-    //int promptID; //esta creo que es mjor quitarla ya q ue tenemos los tiimestamps
-    //operacion
-    double temperature_;
-    double frequency_;
-    double voltage_;
-    double fan_speed_;
-    uint32_t throttling_; //recuerda compo de bits de 20 bits
+    int64_t timestamp_; //hecho
+    double temperature_; //hecho
+    std::vector<double> frequency_; //hecho
+    double voltage_; //hecho
+    double fan_speed_; //hecho
+    throttlingInfo throttling_; // hecho recuerda compo de bits de 20 bits
     // memorias
-    int64_t mem_total_;
-    int64_t mem_used_;
-    double mem_percent_;
-    double mem_percent_engine_;
+    int64_t mem_total_; // hecho
+    int64_t mem_used_; // hecho
+    double mem_percent_; //hecho
+    double mem_percent_engine_; //TODO
     //swap
-    int64_t swap_total_;
-    int64_t swap_used_;
-    double swap_percent_;
+    int64_t swap_total_; // hecho
+    int64_t swap_used_; // hecho
+    double swap_percent_; // hecho
     //cpu
-    double cpu_usage_;
-    double cpu_usage_engine_;
-    cpu_ticks cpu_ticks_;
+    double cpu_usage_; //hecho
+    double cpu_usage_engine_; //TODO
+    cpu_ticks cpu_ticks_; // hecho
     cpu_ticks cpu_ticks_engine_;// TODO mejorar esta parte
     // el conversor a json
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(hardwareMetrics,
@@ -72,7 +68,25 @@ public:
     // setters y getters
         InferenceEngines getEngine() const;
         void setEngine(const InferenceEngines &engine);
+private:
+    InferenceEngines engine_;
+    //metodos privados
+    void fetchMemoryMetrics();
+    void fetchCpuMetrics();
+    void fetchSystemMetrics();
+    double getCpuUsageForPid(pid_t pid);
+    pid_t getEnginePid() const;
+    cpu_ticks getEngineTicks() const;
+    void getEngineCpuPercent( );
+    double getSystemCpuPercent();
+    static  int getCpuCores();
+    std::vector<double> getCpuFrequencies();
+    static double getCoreVoltage();
+    static  long getFanSpeed();
+    static throttlingInfo getThrottlingInfo();
+
 };
+
 
 
 
