@@ -2,11 +2,11 @@
 // Created by yisus on 5/3/26.
 //
 
-#include "promptmetriclogger.h"
+#include "Logger.h"
 
 #include <iostream>
 
-promptmetriclogger::promptmetriclogger(std::string filepath) {
+Logger::Logger(std::string filepath) {
     filepath_ = filepath;
     logfile_.open(filepath_, std::ios::app);
     if (!logfile_.is_open()) {
@@ -15,16 +15,15 @@ promptmetriclogger::promptmetriclogger(std::string filepath) {
     }
 }
 
-promptmetriclogger::~promptmetriclogger() {
+Logger::~Logger() {
     logfile_.flush();
     logfile_.close();
 }
 
-bool promptmetriclogger::write2jsonline(metrics::promptmetrics pm) {
+bool Logger::write2jsonline(const T& pm) {
     nlohmann::json jsonObj = pm;
     if (!logfile_.is_open()) {
         std::cerr << "Error al abrir el archivo: " << filepath_ << std::endl;
-
         return false;
     }
     logfile_<< jsonObj.dump() << std::endl;

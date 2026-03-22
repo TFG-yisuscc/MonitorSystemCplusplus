@@ -10,15 +10,16 @@
 #include "promptmetrics.h"
 
 
-class promptmetriclogger {
+class Logger {
 private:
     std::ofstream logfile_;
     std::string filepath_;
 
 public:
-    promptmetriclogger(std::string filepath);
-    ~promptmetriclogger();
-    bool write2jsonline(metrics::promptmetrics pm);
+    Logger(std::string filepath);
+    ~Logger();
+    template<typename T>
+    bool write2jsonline(T& pm);
 
 };
 

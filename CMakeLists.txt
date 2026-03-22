@@ -13,8 +13,8 @@ add_executable(MonitorSystem src/main.cpp
         includes/utils/promptParser.h
         src/clients/OllamaTest.cpp
         includes/clients/OllamaTest.h
-        includes/metrics/promptmetriclogger.cpp
-        includes/metrics/promptmetriclogger.h
+        includes/metrics/Logger.cpp
+        includes/metrics/Logger.h
         src/clients/LlamaTest.cpp
         includes/clients/LlamaTest.h
         includes/metrics/hardwareMetrics.cpp
