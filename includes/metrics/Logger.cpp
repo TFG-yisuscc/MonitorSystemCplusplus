@@ -20,7 +20,7 @@ Logger::~Logger() {
     logfile_.close();
 }
 
-bool Logger::write2jsonline(const T& pm) {
+ bool Logger::write2jsonline(metrics::promptmetrics pm) {
     nlohmann::json jsonObj = pm;
     if (!logfile_.is_open()) {
         std::cerr << "Error al abrir el archivo: " << filepath_ << std::endl;

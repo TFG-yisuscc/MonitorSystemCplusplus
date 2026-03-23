@@ -1,0 +1,6 @@
+-  DONE: verifiicar el funiomiento de los loggers para los 3 tipos de clases
+-  homogeneizar la clase prompt metric llama 
+-  respecto a los loggers crear un archivo unuevo cada vez que se creeun logger 
+-  crear un archivo "resumen" de la configuarcion de los test
+- Estos puntos se guardan enuna carptea llamada results y asu en otra donde contenga las metricas de prompt hardware y latabbla resumen
+-  crear el configurador y aceptador. 

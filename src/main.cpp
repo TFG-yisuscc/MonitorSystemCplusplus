@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
      //test de hardware metrics
     hardwareMetrics hm = hardwareMetrics(InferenceEngines::OLLAMA);
     printf(std::to_string(hm.timestamp_).c_str());
-    hm.update();¡
+    hm.update();
     printf(std::to_string(hm.timestamp_).c_str());
     printf("\rn");
 

@@ -2,8 +2,7 @@
 // Created by yisus on 8/3/26.
 //
 
-#include "../../includes/utils/LlamaInferencer.h"
-
+#include "utils/LlamaInferencer.h"
 #include <chrono>
 #include <cmath>
 #include <stdexcept>

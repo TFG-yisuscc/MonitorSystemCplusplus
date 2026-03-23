@@ -18,8 +18,9 @@ private:
 public:
     Logger(std::string filepath);
     ~Logger();
-    template<typename T>
-    bool write2jsonline(T& pm);
+
+
+    bool write2jsonline(metrics::promptmetrics);
 
 };
 

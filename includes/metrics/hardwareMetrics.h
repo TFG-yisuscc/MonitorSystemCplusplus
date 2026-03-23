@@ -27,20 +27,16 @@ public:
     double voltage_; //hecho
     double fan_speed_; //hecho
     throttlingInfo throttling_; // hecho recuerda compo de bits de 20 bits
-    // memorias
     int64_t mem_total_; // hecho
     int64_t mem_used_; // hecho
     double mem_percent_; //hecho
-    double mem_percent_engine_; //TODO
     //swap
     int64_t swap_total_; // hecho
     int64_t swap_used_; // hecho
     double swap_percent_; // hecho
     //cpu
     double cpu_usage_; //hecho
-    double cpu_usage_engine_; //TODO
     cpu_ticks cpu_ticks_; // hecho
-    cpu_ticks cpu_ticks_engine_;// TODO mejorar esta parte
     // el conversor a json
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(hardwareMetrics,
                                    timestamp_,
@@ -52,12 +48,10 @@ public:
                                    mem_total_,
                                    mem_used_,
                                    mem_percent_,
-                                   mem_percent_engine_,
                                    swap_total_,
                                    swap_used_,
                                    swap_percent_,
                                    cpu_usage_,
-                                   cpu_usage_engine_,
                                    cpu_ticks_,
                                    engine_);
 

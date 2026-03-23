@@ -2,7 +2,7 @@
 // Created by yisus on 5/3/26.
 //
 
-#include "../../includes/clients/LlamaTest.h"
+#include "clients/LlamaTest.h"
 
 LlamaTest::LlamaTest(std::string model_path, int temperature, int batch_size, int context_size, int seed, int num_prompts) {
     model_path_ = model_path;
