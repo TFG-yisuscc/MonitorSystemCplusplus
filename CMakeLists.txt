@@ -29,6 +29,8 @@ add_executable(MonitorSystem src/main.cpp
         includes/utils/cpuTicks.h
         includes/utils/misc.h
         src/utils/inputConfiguration.cpp
-        src/utils/inputConfiguration.h
+        includes/utils/inputConfiguration.h
+        includes/utils/enumConfig.h
+        includes/utils/enumConfig.h
 )
 target_link_libraries(MonitorSystem PRIVATE llama nlohmann_json::nlohmann_json fmt::fmt)

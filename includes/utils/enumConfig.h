@@ -1,0 +1,9 @@
+//
+// Created by yisus on 23/3/26.
+//
+
+#ifndef MONITORSYSTEM_ENUMCONFIG_H
+#define MONITORSYSTEM_ENUMCONFIG_H
+
+enum TestType {TYPE_1,TYPE_2, TYPE_0 };
+#endif //MONITORSYSTEM_ENUMCONFIG_H

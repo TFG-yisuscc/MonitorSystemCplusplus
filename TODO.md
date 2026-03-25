@@ -4,3 +4,4 @@
 -  crear un archivo "resumen" de la configuarcion de los test
 - Estos puntos se guardan enuna carptea llamada results y asu en otra donde contenga las metricas de prompt hardware y latabbla resumen
 -  crear el configurador y aceptador. 
+- - convertir la temperatura a punto flotante (simple o doble >)
