@@ -39,11 +39,11 @@ void InputConfiguration::run() {
 }
 void InputConfiguration::runOllama() {
     //TODO creamos el objeto ollama test //TODO hacerla conversion a flotante
-    OllamaTest ollamaTest(model_path_or_name_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
+    OllamaTest ollamaTest(model_path_or_name_,run_path_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
     switch (testType_) {
         case TestType::TYPE_0:
             // Implementación del test para OLLAMA tipo 0
-            std::runtime_error("Test type 0 for OLLAMA is not implemented yet.");
+            throw std::runtime_error("Test type 0 for OLLAMA is not implemented yet.");
             break;
         case TestType::TYPE_1:
             // Implementación del test para OLLAMA tipo 1
@@ -56,14 +56,13 @@ void InputConfiguration::runOllama() {
         default:
             throw std::invalid_argument("Invalid test type selected for OLLAMA.");
     }
-    delete &ollamaTest;
 }
  void InputConfiguration::runLlama() {
     LlamaTest llamaTest(model_path_or_name_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
     switch (testType_) {
         case TestType::TYPE_0:
             //implemntación del test para llama
-            std::runtime_error("Test type 0 for OLLAMA is not implemented yet.");
+            throw std::runtime_error("Test type 0 for LLAMA is not implemented yet.");
             break;
         case TestType::TYPE_1:
             // Implementación del test para LLAMA tipo 1
@@ -76,5 +75,31 @@ void InputConfiguration::runOllama() {
         default:
             throw std::invalid_argument("Invalid test type selected for LLAMA.");
     }
-    delete &llamaTest;
+}
+
+void InputConfiguration::createResumen() {
+    //TODO crear el resumen con los campos necesarios y guardarlo en la carpeta de resultados
+    // el resumen es un json con los campos de la configuración y los resultados del test
+    nlohmann::json resumen;
+    resumen["inference_engine"] = inferenceEngine_;
+    resumen["test_type"] = testType_;
+    resumen["batch_size"] = batch_size_;
+    resumen["context_size"] = context_size_;
+    resumen["seed"] = seed_;
+    resumen["num_prompts"] = num_prompts_;
+    resumen["temperature"] = temperature_;
+    resumen["model_path_or_name"] = model_path_or_name_;
+    resumen["timestamp_run_start"] = timestamp_run_start;
+    resumen["timestamp_run_end"] = timestamp_run_end;
+    resumen["anotations"] = anotations;
+    resumen["og_config_json"] = og_config_json;
+
+    std::string resumen_filepath = run_path_ + "/resumen.json";
+    std::ofstream file(resumen_filepath);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file to write the summary.");
+    }
+    file << resumen.dump(4);
+    file.flush();
+    file.close();
 }

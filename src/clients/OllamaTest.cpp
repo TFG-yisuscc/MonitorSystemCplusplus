@@ -5,12 +5,15 @@
 
 #include "clients/OllamaTest.h"
 #include <nlohmann/json.hpp>
+#include <fmt/format.h>
+#include "metrics/Logger.h"
 
 
 // constructores
-OllamaTest::OllamaTest(std::string model_name, int temperature, int batch_size, int context_size, int seed, int num_prompts)
+OllamaTest::OllamaTest(std::string model_name,std::string filepath,int temperature, int batch_size, int context_size, int seed, int num_prompts)
 {
     model_name_ = model_name;
+    filepath_ = filepath;
     temperature_ = temperature;
     batch_size_ = batch_size;
     context_size_ = context_size;
@@ -57,10 +60,13 @@ ollama::request create_request(const std::string& model_name, const std::string&
 // funciones de test
 bool OllamaTest::runTestType1() {
     std::cout << "Test type1" << std::endl;
-    std::string filepath = "../results/metrics.jsonl";
+
     // obtenemos los prompts
     promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
     std::vector<std::string> prompts = parser2.getPrompts();
+    //cramops el lloger de prompts
+    std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
+    Logger promptLogger(log_prompt_file);
     // iteramos sobre los prompts
     for (int i = 0; i < num_prompts_ && i < prompts.size(); i++) {
         std::string prompt = prompts.at(i);
@@ -74,6 +80,7 @@ bool OllamaTest::runTestType1() {
             std::chrono::high_resolution_clock::now().time_since_epoch()).count();
         // LO  CNVETRIMOS EN UN PROMPTETRICS Y LO EJECUTAMOS
         auto pm = metrics::promptmetrics::from_Ollama_json(response.as_json(), tinicio, tfinal, i);
+        promptLogger.write2jsonline(pm);
         //pm.write2jsonline(filepath);
 
     }
@@ -81,6 +88,7 @@ bool OllamaTest::runTestType1() {
 }
 bool OllamaTest::runTestType2() {
     //TODO implementar
+    throw std::runtime_error("Test type 2 for OLLAMA is not implemented yet.");
     return true;
 }
 

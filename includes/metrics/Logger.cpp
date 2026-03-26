@@ -8,6 +8,8 @@
 
 Logger::Logger(std::string filepath) {
     filepath_ = filepath;
+    // verificamos si existe el archivo y si no lo creamos
+
     logfile_.open(filepath_, std::ios::app);
     if (!logfile_.is_open()) {
         //std::cerr << "ERROR opening the file " << filepath_ << std::endl;

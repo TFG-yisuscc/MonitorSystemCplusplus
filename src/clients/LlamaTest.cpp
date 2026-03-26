@@ -53,3 +53,8 @@ bool LlamaTest::runTestType1() {
 return true;
 
 }
+bool LlamaTest::runTestType2() {
+    //TODO implementar el test de tipo 2 para llama
+    throw std::runtime_error("Test type 2 for LLAMA is not implemented yet.");
+    return true;
+}

@@ -21,7 +21,7 @@ add_executable(MonitorSystem src/main.cpp
         includes/metrics/hardwareMetrics.h
         includes/metrics/promptmetricsLlama.h
         includes/utils/ProbabilityType.h
-        includes/clients/LlamaServerTest.cpp
+        src/clients/LlamaServerTest.cpp
         includes/clients/LlamaServerTest.h
         src/utils/LlamaInferencer.cpp
         includes/utils/LlamaInferencer.h

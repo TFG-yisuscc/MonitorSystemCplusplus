@@ -26,15 +26,17 @@ public:
 
     //los parametros del resumen  que se pueblan cuando se hace run
     // nio se si es la mejor opción
-    long long timestamp_run_start;
-    long long timestamp_run_end;
-    std::string run_path_;
+    long long timestamp_run_start = 0L;
+    long long timestamp_run_end  = 0L;
+    std::string run_path_ = "EMPTY";
     //estas son un poco reduundantes creo yo
-    std::string anotations; // este lo recibe del la configuración y lo mente en el resumen
-    std::string og_config_json; // para poder revisarlo luego en caso de que sea necesarío o para poder acceder a campos origenales
+    std::string anotations ="EMPTY"; // este lo recibe del la configuración y lo mente en el resumen
+    std::string og_config_json = "EMPTY"; // para poder revisarlo luego en caso de que sea necesarío o para poder acceder a campos origenales
     //campos opcionales(sobre to por llama cpp)
     // constructor con checkers
     InputConfiguration(nlohmann::json json_config);
+    InputConfiguration(InferenceEngines inference_engine, TestType test_type, int batch_size, int context_size,
+        int seed, int num_prompts, float temperature, const std::string &model_path_or_name);
 
 
     //un metodo run que corre ls test seleccionados
