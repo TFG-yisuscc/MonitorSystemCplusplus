@@ -1,9 +1,6 @@
 {
   "builtin-baseline" : "39a6cc0e44641977a7ccdfdb01a14eaf832aa330",
   "dependencies" : [ {
-    "name" : "nlohmann-json",
-    "version>=" : "3.12.0#2"
-  }, {
     "name" : "llama-cpp",
     "version>=" : "7146"
   }, {

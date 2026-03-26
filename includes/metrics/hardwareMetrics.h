@@ -7,18 +7,22 @@
 #include <cstdint>
 #include <string>
 #include <unistd.h>
+#include <vector>
+
 #include "utils/InferenceEngines.h"
-#include <nlohmann/json.hpp>
 #include <sys/resource.h>
 #include "utils/cpuMonitor.h"
-
+#include "third_party/ollama.hpp" //porque incluye la librería de nholamasn de jason e uinterfiere con la versión de vcpkg
 struct throttlingInfo {
     bool under_voltage;
     bool freq_capped;
     bool throttled;
     bool soft_throttled;
     // otros bits de throttling pueden ser añadidos aquí
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(throttlingInfo, under_voltage,
+        freq_capped, throttled, soft_throttled)
 };
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(cpu_ticks, user, nice, system, idle, iowait, irq, softirq, steal)
 class hardwareMetrics {
 public:
     int64_t timestamp_; //hecho

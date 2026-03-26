@@ -5,6 +5,9 @@
 #ifndef MONITORSYSTEM_CPUTICKS_H
 #define MONITORSYSTEM_CPUTICKS_H
 #include <cstdint>
+
+#include "third_party/ollama.hpp"
+
 struct  cpu_ticks {
     int64_t user;     // tiempo en modo usuario
     int64_t nice;     // tiempo en modo usuario con baja prioridad
@@ -22,6 +25,7 @@ struct  cpu_ticks {
     int64_t active() const {
         return user + nice + system + irq + softirq + steal;
     }
+
 };
 struct cpu_ticks_pid {
 

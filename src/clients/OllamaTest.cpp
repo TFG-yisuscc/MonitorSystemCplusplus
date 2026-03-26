@@ -4,7 +4,6 @@
 
 
 #include "clients/OllamaTest.h"
-#include <nlohmann/json.hpp>
 #include <fmt/format.h>
 #include "metrics/Logger.h"
 
