@@ -5,10 +5,9 @@
 #ifndef MONITORSYSTEM_INPUTCONFIGURATION_H
 #define MONITORSYSTEM_INPUTCONFIGURATION_H
 #include <string>
-
 #include "enumConfig.h"
 #include "InferenceEngines.h"
-#include "nlohmann/json.hpp"
+
 
 
 
@@ -34,9 +33,18 @@ public:
     std::string og_config_json = "EMPTY"; // para poder revisarlo luego en caso de que sea necesarío o para poder acceder a campos origenales
     //campos opcionales(sobre to por llama cpp)
     // constructor con checkers
-    InputConfiguration(nlohmann::json json_config);
+    //InputConfiguration(nlohmann::json json_config);
     InputConfiguration(InferenceEngines inference_engine, TestType test_type, int batch_size, int context_size,
-        int seed, int num_prompts, float temperature, const std::string &model_path_or_name);
+        int seed, int num_prompts, float temperature, const std::string &model_path_or_name)
+        : inferenceEngine_(inference_engine),
+          testType_(test_type),
+          batch_size_(batch_size),
+          context_size_(context_size),
+          seed_(seed),
+          num_prompts_(num_prompts),
+          temperature_(temperature),
+          model_path_or_name_(model_path_or_name) {
+    };
 
 
     //un metodo run que corre ls test seleccionados
