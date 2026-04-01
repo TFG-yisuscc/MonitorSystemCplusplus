@@ -10,6 +10,7 @@
 #include "utils/enumConfig.h"
 
 int main(int argc, char *argv[]) {
+    std::cout << ollama::generate("granite4:micro-h", "Why is the sky blue?") << std::endl;
     // creamos una configuración de entrada
     InputConfiguration input_configuration(InferenceEngines::OLLAMA, TestType::TYPE_1, 4,
         2048, 42, 10, 0, "granite4:micro-h");
