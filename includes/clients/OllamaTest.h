@@ -28,6 +28,7 @@ private:
 public:
     OllamaTest(std::string model_name,std::string filepath, int temperature, int batch_size, int context_size, int seed, int num_prompts);
     OllamaTest(nlohmann::json);
+    bool runTestType0(); //solo se procesan los prompts y no se toman métricas de hardware.
     bool runTestType1();//paralelismo an nivel de prompt individual (tras procesar un promp converge los hilos)
     bool runTestType2(); //paralelismo a nivel de multeples prompts (los hilos convergen al final de todos los prompts)
 };

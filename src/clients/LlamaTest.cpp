@@ -4,6 +4,9 @@
 
 #include "clients/LlamaTest.h"
 
+#include "utils/LlamaInferencer.h"
+#include "utils/promptParser.h"
+
 LlamaTest::LlamaTest(std::string model_path, int temperature, int batch_size, int context_size, int seed, int num_prompts) {
     model_path_ = model_path;
     temperature_ = temperature;
@@ -23,6 +26,22 @@ LlamaTest::LlamaTest(nlohmann::json configLlama) {
     num_prompts_ = configLlama.contains("num_prompts")? configLlama["num_prompts"].get<int>():throw std::runtime_error("num_prompts is required in the config");
 }
 
+bool LlamaTest::runTestType0() {
+//parser y logger ( //TODO)
+    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    std::vector<std::string> prompts = parser2.getPrompts();
+//carga
+    LlamaInferencer inferencer(model_path_, temperature_, batch_size_, context_size_, seed_);
+    inferencer.loadModel();
+
+// bucle
+    for (int i = 0; i < num_prompts_; i++) {
+    std::cout << inferencer.generateTextCompletion(prompts.at(i)).answer << std::endl;
+}
+//cierre
+inferencer.unloadModel();
+return true;
+}
 bool LlamaTest::runTestType1() {
     // creamos esl llama model y lo cargamos con los parametros de la clase
     llama_backend_init();

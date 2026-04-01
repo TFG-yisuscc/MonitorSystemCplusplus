@@ -67,8 +67,7 @@ private:
     // Constructor / Destructor
     // -------------------------------------------------------------------------
 public:
-    LlamaInferencer(const std::string &model_path, int temperature, int batch_size, int context_size, int seed,
-        int num_prompts)
+    LlamaInferencer(const std::string &model_path, int temperature, int batch_size, int context_size, int seed)
         : model_path_(model_path),
           temperature_(temperature),
           batch_size_(batch_size),

@@ -43,7 +43,7 @@ void InputConfiguration::runOllama() {
     switch (testType_) {
         case TestType::TYPE_0:
             // Implementación del test para OLLAMA tipo 0
-            throw std::runtime_error("Test type 0 for OLLAMA is not implemented yet.");
+            ollamaTest.runTestType0();
             break;
         case TestType::TYPE_1:
             // Implementación del test para OLLAMA tipo 1
@@ -61,8 +61,7 @@ void InputConfiguration::runOllama() {
     LlamaTest llamaTest(model_path_or_name_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
     switch (testType_) {
         case TestType::TYPE_0:
-            //implemntación del test para llama
-            throw std::runtime_error("Test type 0 for LLAMA is not implemented yet.");
+           llamaTest.runTestType0();
             break;
         case TestType::TYPE_1:
             // Implementación del test para LLAMA tipo 1
@@ -78,8 +77,6 @@ void InputConfiguration::runOllama() {
 }
 
 void InputConfiguration::createResumen() {
-    //TODO crear el resumen con los campos necesarios y guardarlo en la carpeta de resultados
-    // el resumen es un json con los campos de la configuración y los resultados del test
     nlohmann::json resumen;
     resumen["inference_engine"] = inferenceEngine_;
     resumen["test_type"] = testType_;

@@ -21,6 +21,7 @@ private:
 public:
     LlamaTest(std::string model_path, int temperature, int batch_size, int context_size, int seed, int num_prompts);
     LlamaTest(nlohmann::json);
+    bool runTestType0(); // solo procesa los prompts, no toma medidas hardware
     bool runTestType1();//paralelismo an nivel de prompt individual (tras procesar un promp converge los h
     bool runTestType2(); //paralelismo a nivel de multeples prompts (
 };

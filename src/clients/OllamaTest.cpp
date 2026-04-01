@@ -57,9 +57,7 @@ ollama::request create_request(const std::string& model_name, const std::string&
     return req;
 }
 // funciones de test
-bool OllamaTest::runTestType1() {
-    std::cout << "Test type1" << std::endl;
-
+bool OllamaTest::runTestType0() {
     // obtenemos los prompts
     promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
     std::vector<std::string> prompts = parser2.getPrompts();
@@ -84,6 +82,14 @@ bool OllamaTest::runTestType1() {
 
     }
     return true;
+}
+
+bool OllamaTest::runTestType1() {
+
+    //TODO Implenmentar
+    throw std::runtime_error("Test type 1 for OLLAMA is not implemented yet.");
+    return true;
+
 }
 bool OllamaTest::runTestType2() {
     //TODO implementar
