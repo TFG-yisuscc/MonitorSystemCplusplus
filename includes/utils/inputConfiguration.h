@@ -7,6 +7,7 @@
 #include <string>
 #include "enumConfig.h"
 #include "InferenceEngines.h"
+#include <cstdint>
 
 
 

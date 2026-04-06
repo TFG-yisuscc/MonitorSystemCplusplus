@@ -58,7 +58,7 @@ void InputConfiguration::runOllama() {
     }
 }
  void InputConfiguration::runLlama() {
-    LlamaTest llamaTest(model_path_or_name_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
+    LlamaTest llamaTest(run_path_,model_path_or_name_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
     switch (testType_) {
         case TestType::TYPE_0:
            llamaTest.runTestType0();

@@ -4,10 +4,16 @@
 
 #include "clients/LlamaTest.h"
 
+#include <fmt/format.h>
+
+#include "metrics/Logger.h"
+#include "metrics/promptmetrics.h"
 #include "utils/LlamaInferencer.h"
 #include "utils/promptParser.h"
-
-LlamaTest::LlamaTest(std::string model_path, int temperature, int batch_size, int context_size, int seed, int num_prompts) {
+using namespace metrics;
+LlamaTest::LlamaTest(std::string filepath,std::string model_path, int temperature, int batch_size, int context_size, int seed, int num_prompts) {
+    filepath_ = filepath;
+    //test_id = test_id2;
     model_path_ = model_path;
     temperature_ = temperature;
     batch_size_ = batch_size;
@@ -27,48 +33,38 @@ LlamaTest::LlamaTest(nlohmann::json configLlama) {
 }
 
 bool LlamaTest::runTestType0() {
-//parser y logger ( //TODO)
+//parser y logger ( //)
     promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
     std::vector<std::string> prompts = parser2.getPrompts();
+    std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,getCleanModelPath());
+    Logger promptLogger(log_prompt_file);
 //carga
     LlamaInferencer inferencer(model_path_, temperature_, batch_size_, context_size_, seed_);
-    inferencer.loadModel();
+
 
 // bucle
     for (int i = 0; i < num_prompts_; i++) {
-    std::cout << inferencer.generateTextCompletion(prompts.at(i)).answer << std::endl;
+        if (i == 0) {
+            /*No me molseto en sacarlo del bucle esta condición inicial porque en tería
+             *el compilador es lo suficientemente listo como para hacerlo el solito
+             *¿y quien soy yo para contradecirle?
+             *Bueno si me lo piden los jefes lo hago claro
+             */
+            auto llt = inferencer.loadModel();//con llama se carga directamente en el primer punto así que no me preocupa
+           auto llg = inferencer.generateTextCompletion(prompts.at(i));
+            promptLogger.write2jsonline(promptmetrics::from_Llama(llt, llg, i));
+        }else {
+            auto llg = inferencer.generateTextCompletion(prompts.at(i));
+            promptLogger.write2jsonline(promptmetrics::from_Llama(llg, i));
+        }
+    //std::cout << inferencer.generateTextCompletion(prompts.at(i)).answer << std::endl;
 }
 //cierre
 inferencer.unloadModel();
 return true;
 }
 bool LlamaTest::runTestType1() {
-    // creamos esl llama model y lo cargamos con los parametros de la clase
-    llama_backend_init();
-    // configuaracion y seleccion del modelo
-    llama_model_params model_params = llama_model_default_params();
-    llama_model* model = llama_model_load_from_file(model_path_.c_str(), model_params);
-    if (!model) {
-        llama_backend_free();
-        return false;
-    }
 
-    llama_context_params ctx_params = llama_context_default_params();
-    ctx_params.n_ctx = context_size_;
-    ctx_params.n_batch = batch_size_;
-    //ctx_params.seed = seed_; no es aquí
-
-    llama_context* ctx = llama_init_from_model(model, ctx_params);
-    if (!ctx) {
-        llama_model_free(model);
-        llama_backend_free();
-        return false;
-    }
-    // establecemos el sampling
-
-
-
-    // ejecucion del test de llma  model
 return true;
 
 }
@@ -76,4 +72,12 @@ bool LlamaTest::runTestType2() {
     //TODO implementar el test de tipo 2 para llama
     throw std::runtime_error("Test type 2 for LLAMA is not implemented yet.");
     return true;
+}
+
+// privadas
+std::string LlamaTest::getCleanModelPath() {
+    std::filesystem::path p(model_path_);
+    if (p.extension() == ".gguf")
+        return p.stem().string();  // stem() = nombre sin extensión
+    return "";
 }

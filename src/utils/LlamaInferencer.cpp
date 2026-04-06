@@ -7,6 +7,8 @@
 #include <cmath>
 #include <stdexcept>
 #include <cstring>
+
+#include "third_party/ollama.hpp"
 /*
  *Dado el bajo nivel de abstraccion que presenta la biblioteca de llama.h
  * Para facilitar su uso, se ha creado esta clase que abstrae su uso
@@ -121,9 +123,8 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
     //3 bucle de generación (sampling)
     int n_cur = tokens.size();
     size_t n_max =    this->max_tokens_ <0 ? this->context_size_ - tokens.size(): this->max_tokens_;
+    std::vector<std::string>probs; //string para que no hala que hacer conversiones luego en la clase de prompmetrics
     std::string generated_text;
-    std::vector<std::string> probs; //la razón por la que es un bvector de string, se debe a que noollama lo emite como string
-    // y pranba no te bner que estar haciendo conversiones.
     while (n_cur < n_max) {
         llama_token token_id = llama_sampler_sample(this->sampler_, this->ctx_, -1);
         // Verificar fin de secuencia
@@ -151,7 +152,7 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
         n_cur++;
     }
     res.finDecode = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    res.probabilidades = probs;
+    res.probabilidades = nlohmann::json(probs).dump();
     res.answer = generated_text;
     res.perfTimings = llama_perf_context(this->ctx_);
 

@@ -44,7 +44,7 @@ public:
 
     explicit promptParser(const char * str){
         filePath_ = str;
-        std::vector<std::string>   aux =  std::vector<std::string>();
+        //std::vector<std::string>   aux =  std::vector<std::string>();
         // 1 leemos el json
         std::ifstream file(filePath_);
         if (!file.is_open()) {

@@ -50,7 +50,7 @@ namespace metrics {
 
         promptmetrics(int64_t start_timestamp_ns, int64_t finish_timestamp_ns, const std::string &model, InferenceEngines engine,
             int64_t total_duration_ns, int64_t prompt_eval_count, int64_t prompt_eval_duration_ns, int64_t eval_count,
-            int64_t eval_duration_ns, int64_t load_duration_ns, const std::string &answer, const std::string logprobs ,int prompt_id)
+            int64_t eval_duration_ns, int64_t load_duration_ns, const std::string &answer, const std::string tokenProb ,int prompt_id)
             : start_timestamp_ns(start_timestamp_ns),
               finish_timestamp_ns(finish_timestamp_ns),
               model(model),
@@ -63,7 +63,7 @@ namespace metrics {
               load_duration_ns(load_duration_ns),
               answer(answer),
               probType(this->engine!=OLLAMA?PROBABILITY:LOG_PROBABILITY), // Si el motor no es Ollama, se establece como OTHER
-              tokenProb(logprobs),
+              tokenProb(tokenProb),
               prompt_id(prompt_id) {
         }
 

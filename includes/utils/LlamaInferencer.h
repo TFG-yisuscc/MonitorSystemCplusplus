@@ -24,7 +24,7 @@
 struct LlamaGenerateResult{
     std::string model_path;
     std::string answer;
-    std::vector<std::string> probabilidades;
+    std::string probabilidades; // string but in json so its == to ollama
     llama_perf_context_data perfTimings;
     int64_t inicioPrefill;
     int64_t finPrefill;
