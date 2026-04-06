@@ -10,6 +10,7 @@
 #include <vector>
 #include <stdint.h>
 
+
 /**
  * LlamaInferencer - Clase auxiliar que encapsula el ciclo de vida completo de un modelo llama.cpp:
  *  - Inicialización del backend
@@ -21,8 +22,9 @@
  */
 
 struct LlamaGenerateResult{
+    std::string model_path;
     std::string answer;
-    std::vector<float> probabilidades;
+    std::vector<std::string> probabilidades;
     llama_perf_context_data perfTimings;
     int64_t inicioPrefill;
     int64_t finPrefill;

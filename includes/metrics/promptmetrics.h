@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include "third_party/ollama.hpp"
 #include "utils/InferenceEngines.h"
+#include "utils/LlamaInferencer.h"
 #include "utils/ProbabilityType.h"
 /*
  * Esta clase combinala estructura de los datos del prompt metrics y el guardado de los mismos en un archivo jsonl,
@@ -68,7 +69,8 @@ namespace metrics {
 
         ~promptmetrics() = default;
         static promptmetrics from_Ollama_json( nlohmann::json json,int64_t start_timestamp,int64_t finish_timestamp, int prompt_id);
-
+        static promptmetrics from_Llama(LlamaLoadTimestamps llt, LlamaGenerateResult llg, int prompt_id);
+        static promptmetrics from_Llama( LlamaGenerateResult llg, int prompt_id);// esta loadtimes o
     };
 
 

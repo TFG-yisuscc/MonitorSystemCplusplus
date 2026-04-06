@@ -122,7 +122,8 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
     int n_cur = tokens.size();
     size_t n_max =    this->max_tokens_ <0 ? this->context_size_ - tokens.size(): this->max_tokens_;
     std::string generated_text;
-    std::vector<float> probs;
+    std::vector<std::string> probs; //la razón por la que es un bvector de string, se debe a que noollama lo emite como string
+    // y pranba no te bner que estar haciendo conversiones.
     while (n_cur < n_max) {
         llama_token token_id = llama_sampler_sample(this->sampler_, this->ctx_, -1);
         // Verificar fin de secuencia
@@ -135,7 +136,7 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
         for (int i = 0; i < n_vocab; i++)
             sum += std::exp(logits[i] - max_logit);// ver si merece la pena hacer esto para evitar overflow
         float prob = std::exp(logits[token_id] - max_logit) / sum;
-        probs.push_back(prob);
+        probs.push_back(std::to_string(prob));
         char buf[256];
         int n = llama_token_to_piece(this->vocab_, token_id, buf, sizeof(buf), 0, false);
         if (n > 0) {
