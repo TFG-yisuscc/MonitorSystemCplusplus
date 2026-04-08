@@ -60,14 +60,17 @@ public:
                                    engine_);
 
     // constructor y destructor
-    hardwareMetrics(const InferenceEngines engine);
+    hardwareMetrics(const InferenceEngines engine); // creo que este va aser irrelevante
+
+    hardwareMetrics();
+
     // actualiza
      void update();
     // setters y getters
         InferenceEngines getEngine() const;
         void setEngine(const InferenceEngines &engine);
 private:
-    InferenceEngines engine_;
+    InferenceEngines engine_; //TODO mirar si merece la pena mantenerlo u eliminarlo
     //metodos privados
     void fetchMemoryMetrics();
     void fetchCpuMetrics();

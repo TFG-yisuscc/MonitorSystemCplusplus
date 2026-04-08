@@ -30,5 +30,7 @@ add_executable(MonitorSystem src/main.cpp
         includes/utils/inputConfiguration.h
         includes/utils/enumConfig.h
         includes/utils/enumConfig.h
+        includes/utils/hardwareMeasurements.cpp
+        includes/utils/hardwareMeasurements.h
 )
 target_link_libraries(MonitorSystem PRIVATE llama fmt::fmt)

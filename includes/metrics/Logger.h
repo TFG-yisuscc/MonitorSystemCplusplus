@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iosfwd>
 
+#include "hardwareMetrics.h"
 #include "promptmetrics.h"
 
 
@@ -21,6 +22,7 @@ public:
 
 
     bool write2jsonline(metrics::promptmetrics);
+    bool write2jsonline(hardwareMetrics);
 
 };
 

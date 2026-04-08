@@ -8,6 +8,7 @@
 
 #include "metrics/Logger.h"
 #include "metrics/promptmetrics.h"
+#include "utils/hardwareMeasurements.h"
 #include "utils/LlamaInferencer.h"
 #include "utils/promptParser.h"
 using namespace metrics;
@@ -50,7 +51,7 @@ bool LlamaTest::runTestType0() {
              *¿y quien soy yo para contradecirle?
              *Bueno si me lo piden los jefes lo hago claro
              */
-            auto llt = inferencer.loadModel();//con llama se carga directamente en el primer punto así que no me preocupa
+            auto llt = inferencer.loadModel();//con ollama se carga directamente en el primer punto así que no me preocupa
            auto llg = inferencer.generateTextCompletion(prompts.at(i));
             promptLogger.write2jsonline(promptmetrics::from_Llama(llt, llg, i));
         }else {
@@ -64,7 +65,38 @@ inferencer.unloadModel();
 return true;
 }
 bool LlamaTest::runTestType1() {
+    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    std::vector<std::string> prompts = parser2.getPrompts();
+    std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,getCleanModelPath());
+    Logger promptLogger(log_prompt_file);
+    std::string log_hw_file = filepath_ + fmt::format("/{}_hw_metrics_{}_test1.jsonl", test_id, getCleanModelPath());
+    LlamaInferencer inferencer(model_path_, temperature_, batch_size_, context_size_, seed_);
+    HardwareMeasurements hwMonitor(log_hw_file, 1.0); // muestrea cada 1 segundo
 
+    std::thread hwThread([&hwMonitor]() {
+        hwMonitor.start(); // bloquea internamente hasta que se llame stop()
+    });
+    // bucle
+    for (int i = 0; i < num_prompts_; i++) {
+        if (i == 0) {
+            /*No me molseto en sacarlo del bucle esta condición inicial porque en tería
+             *el compilador es lo suficientemente listo como para hacerlo el solito
+             *¿y quien soy yo para contradecirle?
+             *Bueno si me lo piden los jefes lo hago claro
+             */
+            auto llt = inferencer.loadModel();//con ollama se carga directamente en el primer punto así que no me preocupa
+            auto llg = inferencer.generateTextCompletion(prompts.at(i));
+            promptLogger.write2jsonline(promptmetrics::from_Llama(llt, llg, i));
+        }else {
+            auto llg = inferencer.generateTextCompletion(prompts.at(i));
+            promptLogger.write2jsonline(promptmetrics::from_Llama(llg, i));
+        }
+
+    }
+    //cierre
+    inferencer.unloadModel();
+    hwMonitor.stop();
+    hwThread.join();
 return true;
 
 }
