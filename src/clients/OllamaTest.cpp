@@ -98,12 +98,44 @@ bool OllamaTest::runTestType1() {
 
     }
     ollamaClose();
+    hwMonitor.stop();
+    hwThread.join();
     return true;
-
 }
-bool OllamaTest::runTestType2() {
-    //TODO implementar
-    throw std::runtime_error("Test type 2 for OLLAMA is not implemented yet.");
+bool OllamaTest::runTestType1_5seg() {
+    // obtenemos los prompts
+    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    std::vector<std::string> prompts = parser2.getPrompts();
+    //cramops el lloger de prompts
+    std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
+    Logger promptLogger(log_prompt_file);
+    std::string log_hw_file = filepath_ + fmt::format("/{}_hw_metrics_{}_test1.jsonl", test_id, model_name_);
+    HardwareMeasurements hwMonitor(log_hw_file, 1.0); // muestrea cada 1 segundo
+    std::thread hwThread([&hwMonitor]() {
+        hwMonitor.start(); // bloquea internamente hasta que se llame stop()
+    });
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    // iteramos sobre los prompts
+    for (int i = 0; i < num_prompts_ && i < prompts.size(); i++) {
+        std::string prompt = prompts.at(i);
+        // creamos la request
+        ollama::request req = create_request( prompt);
+        // enviamos la request y obtenemos la respuesta
+        int64_t tinicio = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        ollama::response response =  ollama::generate(req);
+        int64_t tfinal = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        // LO  CNVETRIMOS EN UN PROMPTETRICS Y LO EJECUTAMOS
+        auto pm = metrics::promptmetrics::from_Ollama_json(response.as_json(), tinicio, tfinal, i);
+        promptLogger.write2jsonline(pm);
+        //pm.write2jsonline(filepath);
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+    }
+    ollamaClose();
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    hwMonitor.stop();
+    hwThread.join();
     return true;
 }
 

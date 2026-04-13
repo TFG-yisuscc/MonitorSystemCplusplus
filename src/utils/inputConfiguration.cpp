@@ -50,7 +50,7 @@ void InputConfiguration::runOllama() {
             break;
         case TestType::TYPE_2:
             // Implementación del test para OLLAMA tipo 2
-            ollamaTest.runTestType2();
+            ollamaTest.runTestType1_5seg();
             break;
         default:
             throw std::invalid_argument("Invalid test type selected for OLLAMA.");
@@ -68,7 +68,7 @@ void InputConfiguration::runOllama() {
             break;
         case TestType::TYPE_2:
             // Implementación del test para LLAMA tipo 2
-            llamaTest.runTestType2();
+            llamaTest.runTestType1_5seg();
             break;
         default:
             throw std::invalid_argument("Invalid test type selected for LLAMA.");

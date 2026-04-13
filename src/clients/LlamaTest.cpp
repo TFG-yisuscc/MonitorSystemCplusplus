@@ -95,14 +95,43 @@ bool LlamaTest::runTestType1() {
     }
     //cierre
     inferencer.unloadModel();
+    sleep(1);
     hwMonitor.stop();
     hwThread.join();
 return true;
 
 }
-bool LlamaTest::runTestType2() {
-    //TODO implementar el test de tipo 2 para llama
-    throw std::runtime_error("Test type 2 for LLAMA is not implemented yet.");
+bool LlamaTest::runTestType1_5seg() {
+    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    std::vector<std::string> prompts = parser2.getPrompts();
+    std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,getCleanModelPath());
+    Logger promptLogger(log_prompt_file);
+    std::string log_hw_file = filepath_ + fmt::format("/{}_hw_metrics_{}_test1.jsonl", test_id, getCleanModelPath());
+    LlamaInferencer inferencer(model_path_, temperature_, batch_size_, context_size_, seed_);
+    HardwareMeasurements hwMonitor(log_hw_file, 1.0); // muestrea cada 1 segundo
+
+    std::thread hwThread([&hwMonitor]() {
+        hwMonitor.start(); // bloquea internamente hasta que se llame stop()
+    });
+    // bucle
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    for (int i = 0; i < num_prompts_; i++) {
+        if (i == 0) {
+            auto llt = inferencer.loadModel();//con ollama se carga directamente en el primer punto así que no me preocupa
+            auto llg = inferencer.generateTextCompletion(prompts.at(i));
+            promptLogger.write2jsonline(promptmetrics::from_Llama(llt, llg, i));
+        }else {
+            auto llg = inferencer.generateTextCompletion(prompts.at(i));
+            promptLogger.write2jsonline(promptmetrics::from_Llama(llg, i));
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+    }
+    //cierre
+    inferencer.unloadModel();
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    hwMonitor.stop();
+    hwThread.join();
+
     return true;
 }
 

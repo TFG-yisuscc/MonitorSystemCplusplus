@@ -25,7 +25,7 @@ private:
     int seed_;
     int num_prompts_;
 
-    // TODO no se si añadir los parametros TOP-p y TOP k
+
     bool ollamaClose();
     ollama::request create_request(const std::string& prompt);
 public:
@@ -33,7 +33,7 @@ public:
     OllamaTest(nlohmann::json);
     bool runTestType0(); //solo se procesan los prompts y no se toman métricas de hardware.
     bool runTestType1();//paralelismo a nivel de multeples prompts (los hilos convergen al final de todos los prompts)
-    bool runTestType2();
+    bool runTestType1_5seg();
 };
 
 
