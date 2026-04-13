@@ -20,6 +20,11 @@
  *  - Generación de texto (tokenización, decode, sample, detokenización)
  *  todos los timestamps son en nanosegundos (ns) para poderc omparar con ollama
  */
+//
+// Incluir en los parametros ajustables por el usuario los parametros de sampleo (aunque en teoria son "fijos").
+// mas alla de la temperatura, el top-p y el top-k,
+// puesto que estos no aparencen en el .gguf
+// https://github.com/ollama/ollama/blob/61086083eb8c558bc14c61d6df630c3bf6e690b4/api/types.go
 
 struct LlamaGenerateResult{
     std::string model_path;
@@ -52,7 +57,7 @@ public:
     int batch_size_;
     int context_size_;
     int seed_;
-    int max_tokens_ = -1;// delimitado por el tamaño de contexto
+    int max_tokens_ = -1;// supuestamente delimitado por el tamaño de contexto
     int32_t repeat_last_n_ = 64;
     float repeat_penalty_ = 1.3f;
     float frequency_penalty_ = 0.1f;

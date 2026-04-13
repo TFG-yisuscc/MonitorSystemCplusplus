@@ -6,10 +6,11 @@
 #include "clients/OllamaTest.h"
 #include <fmt/format.h>
 #include "metrics/Logger.h"
+#include "utils/hardwareMeasurements.h"
 
 
 // constructores
-OllamaTest::OllamaTest(std::string model_name,std::string filepath,int temperature, int batch_size, int context_size, int seed, int num_prompts)
+OllamaTest::OllamaTest(std::string model_name,std::string filepath,float temperature, int batch_size, int context_size, int seed, int num_prompts)
 {
     model_name_ = model_name;
     filepath_ = filepath;
@@ -37,25 +38,7 @@ OllamaTest::OllamaTest(nlohmann::json testConfig) {
 // destructores
 
 
-// funciones auxiliares
-ollama::request create_request(const std::string& model_name, const std::string& prompt,int temperature, int batch_size, int
-                               context_size, int seed)
-{
-    nlohmann::json options;
-    /*¡¡¡ATENCION!!!!!
-     * Revisa bien si ollama hace caso a los parametros especificados o los ignora
-     * Que ollama tiene fama de ignorar parametros que se le especifican.
-     */
-    options["options"]["temperature"] = temperature;
-    options["options"]["num_ctx"] = context_size;
-    options["options"]["num_batch"] = batch_size;
-    options["options"]["seed"] = seed;
 
-    ollama::request req(model_name, prompt, options,false);
-    req["logprobs"] = true;
-    req["verbose"]  = true;
-    return req;
-}
 // funciones de test
 bool OllamaTest::runTestType0() {
     // obtenemos los prompts
@@ -68,7 +51,7 @@ bool OllamaTest::runTestType0() {
     for (int i = 0; i < num_prompts_ && i < prompts.size(); i++) {
         std::string prompt = prompts.at(i);
         // creamos la request
-        ollama::request req = create_request(model_name_, prompt, temperature_, batch_size_, context_size_, seed_);
+        ollama::request req = create_request( prompt);
         // enviamos la request y obtenemos la respuesta
         int64_t tinicio = std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -81,13 +64,40 @@ bool OllamaTest::runTestType0() {
         //pm.write2jsonline(filepath);
 
     }
+    ollamaClose();
     return true;
 }
 
 bool OllamaTest::runTestType1() {
+    // obtenemos los prompts
+    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    std::vector<std::string> prompts = parser2.getPrompts();
+    //cramops el lloger de prompts
+    std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
+    Logger promptLogger(log_prompt_file);
+    std::string log_hw_file = filepath_ + fmt::format("/{}_hw_metrics_{}_test1.jsonl", test_id, model_name_);
+    HardwareMeasurements hwMonitor(log_hw_file, 1.0); // muestrea cada 1 segundo
+    std::thread hwThread([&hwMonitor]() {
+        hwMonitor.start(); // bloquea internamente hasta que se llame stop()
+    });
+    // iteramos sobre los prompts
+    for (int i = 0; i < num_prompts_ && i < prompts.size(); i++) {
+        std::string prompt = prompts.at(i);
+        // creamos la request
+        ollama::request req = create_request( prompt);
+        // enviamos la request y obtenemos la respuesta
+        int64_t tinicio = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        ollama::response response =  ollama::generate(req);
+        int64_t tfinal = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        // LO  CNVETRIMOS EN UN PROMPTETRICS Y LO EJECUTAMOS
+        auto pm = metrics::promptmetrics::from_Ollama_json(response.as_json(), tinicio, tfinal, i);
+        promptLogger.write2jsonline(pm);
+        //pm.write2jsonline(filepath);
 
-    //TODO Implenmentar
-    throw std::runtime_error("Test type 1 for OLLAMA is not implemented yet.");
+    }
+    ollamaClose();
     return true;
 
 }
@@ -97,3 +107,39 @@ bool OllamaTest::runTestType2() {
     return true;
 }
 
+
+// funciones auxiliares
+ollama::request OllamaTest::create_request( const std::string& prompt)
+{
+    nlohmann::json options;
+    /*¡¡¡ATENCION!!!!!
+     * Revisa bien si ollama hace caso a los parametros especificados o los ignora
+     * Que ollama tiene fama de ignorar parametros que se le especifican.
+     * OJO esta matniene el keepalive en memoria de forma permanente
+     */
+    options["options"]["temperature"] = temperature_;
+    options["options"]["num_ctx"] = context_size_;
+    options["options"]["num_batch"] = batch_size_;
+    options["options"]["seed"] = seed_;
+    options["options"]["keep_alive"] =-1;
+
+    ollama::request req(model_name_, prompt, options,false);
+    req["logprobs"] = true;
+    req["verbose"]  = true;
+    return req;
+}
+bool OllamaTest::ollamaClose() {
+    nlohmann::json options;
+    //menos el keep alive el resto de opciones dan igual
+    options["options"]["temperature"] = temperature_;
+    options["options"]["num_ctx"] = context_size_;
+    options["options"]["num_batch"] = batch_size_;
+    options["options"]["seed"] = seed_;
+    options["options"]["keep_alive"] =-1;
+    //e campo de prompt tien que estar vacío para que se cierre el modelo
+    ollama::request req(model_name_, "", options,false);
+    req["logprobs"] = true;
+    req["verbose"]  = true;
+    ollama::response response =  ollama::generate(req);
+    return true;
+}

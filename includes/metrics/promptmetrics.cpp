@@ -40,7 +40,7 @@ namespace metrics {
         int64_t prompt_eval_duration_ns = llg.perfTimings.t_p_eval_ms * 1'000'000;
         int64_t eval_count = llg.perfTimings.n_eval;
         int64_t eval_duration_ns = llg.perfTimings.t_eval_ms * 1'000'000;
-        int64_t load_duration_ns = llg.perfTimings.t_load_ms * 1'000'000;
+        int64_t load_duration_ns = 0; //llg.perfTimings.t_load_ms * 1'000'000;
         std::string answer = llg.answer;
          InferenceEngines engine = InferenceEngines::LLAMA;
          std::string probs = llg.probabilidades;
@@ -54,12 +54,12 @@ namespace metrics {
         std::string model = llg.model_path;
         int64_t start_timestamp_ns = llg.inicioDecode;
         int64_t finish_timestamp_ns = llg.finSample;
-        int64_t total_duration_ns = llg.finSample - llg.finDecode;
+        int64_t total_duration_ns = llg.finDecode - llg.finSample;
         int64_t prompt_eval_count = llg.perfTimings.n_p_eval;
         int64_t prompt_eval_duration_ns = llg.perfTimings.t_p_eval_ms * 1'000'000;
         int64_t eval_count = llg.perfTimings.n_eval;
         int64_t eval_duration_ns = llg.perfTimings.t_eval_ms * 1'000'000;
-        int64_t load_duration_ns = llg.perfTimings.t_load_ms * 1'000'000;
+        int64_t load_duration_ns = 0;
         std::string answer = llg.answer;
         InferenceEngines engine = InferenceEngines::LLAMA;
         std::string probs = llg.probabilidades;

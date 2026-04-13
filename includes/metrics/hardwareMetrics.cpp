@@ -31,7 +31,7 @@ void hardwareMetrics::update() {
 
 // ─── RAM & Swap ────────────────────────────────────────────────────────────────
 void hardwareMetrics::fetchMemoryMetrics() {
-    //TODO metricas de memoria especificas al engine
+
     // que como ya adelantamos de monitoer system por culpa  ollama es algo mas complejo
 
     std::ifstream file("/proc/meminfo");
@@ -63,12 +63,10 @@ void hardwareMetrics::fetchMemoryMetrics() {
 }
 
 // ─── CPU ───────────────────────────────────────────────────────────────────────
-//TODO resolver todo el pifostio de las cpu  que me esta hasta doliendo la cabeza
-void hardwareMetrics::fetchCpuMetrics() {
-    //TODO metricas de cpu
 
+void hardwareMetrics::fetchCpuMetrics() {
     this->cpu_ticks_ = getCpuTimes();
-     this->cpu_usage_ = CpuMonitor::getSystemCpuPercent();
+    this->cpu_usage_ = CpuMonitor::getSystemCpuPercent();
      //this->cpu_usage_engine_ = CpuMonitor::getEngineCpuPercent();
 }
 
@@ -76,7 +74,7 @@ void hardwareMetrics::fetchCpuMetrics() {
 
 // ─── Sistema (temperatura, frecuencia, voltaje, fan, throttling) ───────────────
 void hardwareMetrics::fetchSystemMetrics() {
-        //TODO metricas de sistema
+
 
     std::ifstream file("/sys/class/thermal/thermal_zone0/temp");
     if (!file.is_open())
@@ -96,7 +94,7 @@ void hardwareMetrics::fetchSystemMetrics() {
     self.voltage = float(cmd_output.split("=")[1][:-2])
      */
 
-        this->voltage_ = getCoreVoltage();
+    this->voltage_ = getCoreVoltage();
 
     // ventilador
     this->fan_speed_ = getFanSpeed();
@@ -108,32 +106,16 @@ void hardwareMetrics::fetchSystemMetrics() {
     *
     */
     this->throttling_ = getThrottlingInfo();
+    this->internalpower_ = getPower();
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
-pid_t hardwareMetrics::getEnginePid() const {
-    //TODO obtener el PID del proceso del motor de inferencia
-    return 0;
-}
-
-   void hardwareMetrics::getEngineCpuPercent(){
-    static cpu_ticks engine_ticks_prev{};
-    switch (this->engine_) {
-        case InferenceEngines::LLAMA:
-            //
-            //
-
-            break;
-        case InferenceEngines::OLLAMA:
-            //TODO cpu percent para ollama
-            break;
-        default:
-            //std::cerr << "Unknown engine type" << std::endl;
-            throw std::runtime_error("Unknown engine type");
-    }
-}
+// Auxiliares
 
 double hardwareMetrics::getSystemCpuPercent() {
+
+    /* es funcionalmete identaca a psutils de python
+     * pero es preferible unidades absolutas independientes.
+     */
     static cpu_ticks ct_prev{};
     cpu_ticks actual = getCpuTimes();
 
@@ -232,4 +214,63 @@ throttlingInfo hardwareMetrics::getThrottlingInfo() {
     info.throttled      = (raw & (1 << 2)) != 0;  // 0x00004
     info.soft_throttled = (raw & (1 << 3)) != 0;  // 0x00008
     return info;
+}
+double hardwareMetrics::getPower() {
+    /* Adaptado de este repo
+     * https://github.com/TFG-yisuscc/RPi5-power
+     * Unidades en watios
+     */
+    //TODO mirar los de los hats porque no hay carril de 5v
+ double power  = 0.0;
+    FILE* pipe = popen("vcgencmd pmic_read_adc 2>/dev/null", "r");
+    if (!pipe)
+        throw std::runtime_error("No se pudo ejecutar vcgencmd pmic_read_adc");
+
+    std::vector<double> currents, voltages;
+    char line[256];
+
+    while (fgets(line, sizeof(line), pipe)) {
+        std::string s(line);
+
+        // Busca el valor numérico tras '='
+        auto eq = s.find('=');
+        if (eq == std::string::npos) continue;
+        double val = std::stod(s.substr(eq + 1));  // ignora la unidad final (A/V)
+
+        if (s.find("current") != std::string::npos)
+            currents.push_back(val);
+        else if (s.find("volt") != std::string::npos)
+            voltages.push_back(val);
+    }
+    pclose(pipe);
+    size_t n = std::min(currents.size(), voltages.size());
+    for (size_t i = 0; i < n; i++)
+        power += currents[i] * voltages[i];
+    //escalado de los valores sacado de aquí
+    // https://github.com/TFG-yisuscc/RPi5-power
+
+    return power;
+}
+pid_t hardwareMetrics::getEnginePid() const {
+    //TODO obtener el PID del proceso del motor de inferencia
+    throw std::runtime_error("getEnginePid() is not implemented yet.");
+    return 0;
+}
+
+void hardwareMetrics::getEngineCpuPercent() {
+    throw std::runtime_error("getEngineCpuPercent() is not implemented yet.");
+    static cpu_ticks engine_ticks_prev{};
+    switch (this->engine_) {
+        case InferenceEngines::LLAMA:
+            //
+            //
+
+            break;
+        case InferenceEngines::OLLAMA:
+
+            break;
+        default:
+            //std::cerr << "Unknown engine type" << std::endl;
+            throw std::runtime_error("Unknown engine type");
+    }
 }

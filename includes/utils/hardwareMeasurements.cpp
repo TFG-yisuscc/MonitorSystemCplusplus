@@ -19,9 +19,9 @@ HardwareMeasurements::~HardwareMeasurements() {
 }
 
 void HardwareMeasurements::start() {
-    //TODO  segundos tome las medidas y las guarde con el logger
+    //TODO adaptar harwaremetrics para quitar el inference engines o ponerlo de otro modo
         running_.store(true);
-        hardwareMetrics hm(InferenceEngines::LLAMA);
+        hardwareMetrics hm(InferenceEngines::OTHER);
         while (running_.load()) {
            hm.update();
             logger_.write2jsonline(hm);

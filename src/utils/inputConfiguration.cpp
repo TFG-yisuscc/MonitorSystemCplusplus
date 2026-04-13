@@ -38,7 +38,6 @@ void InputConfiguration::run() {
     createResumen();
 }
 void InputConfiguration::runOllama() {
-    //TODO creamos el objeto ollama test //TODO hacerla conversion a flotante
     OllamaTest ollamaTest(model_path_or_name_,run_path_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
     switch (testType_) {
         case TestType::TYPE_0:

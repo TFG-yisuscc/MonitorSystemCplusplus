@@ -18,6 +18,8 @@ struct throttlingInfo {
     bool freq_capped;
     bool throttled;
     bool soft_throttled;
+
+
     // otros bits de throttling pueden ser añadidos aquí
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(throttlingInfo, under_voltage,
         freq_capped, throttled, soft_throttled)
@@ -31,6 +33,7 @@ public:
     double voltage_; //hecho
     double fan_speed_; //hecho
     throttlingInfo throttling_; // hecho recuerda compo de bits de 20 bits
+    double internalpower_; //hecho unidades en vatios
     int64_t mem_total_; // hecho
     int64_t mem_used_; // hecho
     double mem_percent_; //hecho
@@ -49,6 +52,7 @@ public:
                                    voltage_,
                                    fan_speed_,
                                    throttling_,
+                                   internalpower_,
                                    mem_total_,
                                    mem_used_,
                                    mem_percent_,
@@ -75,16 +79,19 @@ private:
     void fetchMemoryMetrics();
     void fetchCpuMetrics();
     void fetchSystemMetrics();
-    double getCpuUsageForPid(pid_t pid);
-    pid_t getEnginePid() const;
-    cpu_ticks getEngineTicks() const;
-    void getEngineCpuPercent( );
     double getSystemCpuPercent();
     static  int getCpuCores();
     std::vector<double> getCpuFrequencies();
     static double getCoreVoltage();
     static  long getFanSpeed();
     static throttlingInfo getThrottlingInfo();
+    static double getPower();
+
+    //deprecated functions
+    double getCpuUsageForPid(pid_t pid);//drepecated
+    pid_t getEnginePid() const; //drepecated
+    cpu_ticks getEngineTicks() const; //drepecated
+    void getEngineCpuPercent( ); //drepecated
 
 };
 

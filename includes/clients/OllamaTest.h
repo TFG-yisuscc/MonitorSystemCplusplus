@@ -19,18 +19,21 @@ private:
     std::string model_name_;
     std::string filepath_; //ruta para guardar los resultados
     long long test_id; // el timestammp de comienczo en la practica
-    int temperature_;
+    float temperature_;
     int batch_size_;
     int context_size_;
     int seed_;
     int num_prompts_;
+
     // TODO no se si añadir los parametros TOP-p y TOP k
+    bool ollamaClose();
+    ollama::request create_request(const std::string& prompt);
 public:
-    OllamaTest(std::string model_name,std::string filepath, int temperature, int batch_size, int context_size, int seed, int num_prompts);
+    OllamaTest(std::string model_name,std::string filepath, float temperature, int batch_size, int context_size, int seed, int num_prompts);
     OllamaTest(nlohmann::json);
     bool runTestType0(); //solo se procesan los prompts y no se toman métricas de hardware.
-    bool runTestType1();//paralelismo an nivel de prompt individual (tras procesar un promp converge los hilos)
-    bool runTestType2(); //paralelismo a nivel de multeples prompts (los hilos convergen al final de todos los prompts)
+    bool runTestType1();//paralelismo a nivel de multeples prompts (los hilos convergen al final de todos los prompts)
+    bool runTestType2();
 };
 
 

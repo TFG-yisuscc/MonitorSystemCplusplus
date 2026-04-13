@@ -8,8 +8,7 @@
 #include "enumConfig.h"
 #include "InferenceEngines.h"
 #include <cstdint>
-
-
+#include "third_party/ollama.hpp"
 
 
 class InputConfiguration {
@@ -23,6 +22,7 @@ public:
     int num_prompts_;
     float temperature_;
     std::string model_path_or_name_;
+    float hardwarePeriod;
 
     //los parametros del resumen  que se pueblan cuando se hace run
     // nio se si es la mejor opción
@@ -32,11 +32,10 @@ public:
     //estas son un poco reduundantes creo yo
     std::string anotations ="EMPTY"; // este lo recibe del la configuración y lo mente en el resumen
     std::string og_config_json = "EMPTY"; // para poder revisarlo luego en caso de que sea necesarío o para poder acceder a campos origenales
-    //campos opcionales(sobre to por llama cpp)
-    // constructor con checkers
-    //InputConfiguration(nlohmann::json json_config);
+
+
     InputConfiguration(InferenceEngines inference_engine, TestType test_type, int batch_size, int context_size,
-        int seed, int num_prompts, float temperature, const std::string &model_path_or_name)
+        int seed, int num_prompts, float temperature, const std::string &model_path_or_name, float hardwarePeriod = 0.5)
         : inferenceEngine_(inference_engine),
           testType_(test_type),
           batch_size_(batch_size),
@@ -44,14 +43,15 @@ public:
           seed_(seed),
           num_prompts_(num_prompts),
           temperature_(temperature),
-          model_path_or_name_(model_path_or_name) {
-    };
-
+          model_path_or_name_(model_path_or_name),
+          hardwarePeriod(hardwarePeriod) {};
+    // constructor a partir de un json con checkers
+    //InputConfiguration(nlohmann::json json_config);
 
     //un metodo run que corre ls test seleccionados
     void run();
 private:
-    //un "conversor" a la clase resumen
+
     void runOllama();
     void runLlama();
     void createResumen();
