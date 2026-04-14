@@ -2,10 +2,11 @@
 // Created by yisus on 8/4/26.
 //
 
-#include "hardwareMeasurements.h"
+#include "../../includes/utils/hardwareMeasurements.h"
 
 #include "metrics/hardwareMetrics.h"
-
+/*
+ *Clase que controla la tomas de medidas */
 HardwareMeasurements::HardwareMeasurements(const std::string& filepath, double periodo_s)
     : logger_(filepath),    // ✅ construye directamente, no default-construye
       periodo_s(periodo_s)
@@ -33,5 +34,5 @@ void HardwareMeasurements::stop() {
  running_.store(false);
 }
 void HardwareMeasurements::close() {
-
+// no hace ná
 }

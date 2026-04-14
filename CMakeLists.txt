@@ -6,17 +6,17 @@ find_package(llama CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 include_directories(includes)
 add_executable(MonitorSystem src/main.cpp
-        includes/metrics/promptmetrics.cpp
+        src/metrics/promptmetrics.cpp
         includes/metrics/promptmetrics.h
         includes/utils/InferenceEngines.h
         includes/utils/promptParser.h
         src/clients/OllamaTest.cpp
         includes/clients/OllamaTest.h
-        includes/metrics/Logger.cpp
+        src/metrics/Logger.cpp
         includes/metrics/Logger.h
         src/clients/LlamaTest.cpp
         includes/clients/LlamaTest.h
-        includes/metrics/hardwareMetrics.cpp
+        src/metrics/hardwareMetrics.cpp
         includes/metrics/hardwareMetrics.h
         includes/utils/ProbabilityType.h
         src/clients/LlamaServerTest.cpp
@@ -30,7 +30,7 @@ add_executable(MonitorSystem src/main.cpp
         includes/utils/inputConfiguration.h
         includes/utils/enumConfig.h
         includes/utils/enumConfig.h
-        includes/utils/hardwareMeasurements.cpp
+        src/utils/hardwareMeasurements.cpp
         includes/utils/hardwareMeasurements.h
 )
 target_link_libraries(MonitorSystem PRIVATE llama fmt::fmt)
