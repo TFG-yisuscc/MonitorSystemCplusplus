@@ -74,32 +74,28 @@ bool LlamaTest::runTestType1() {
     HardwareMeasurements hwMonitor(log_hw_file, 1.0); // muestrea cada 1 segundo
 
     std::thread hwThread([&hwMonitor]() {
-        hwMonitor.start(); // bloquea internamente hasta que se llame stop()
+        try { hwMonitor.start(); } catch (...) {}
     });
-    // bucle
-    for (int i = 0; i < num_prompts_; i++) {
-        if (i == 0) {
-            /*No me molseto en sacarlo del bucle esta condición inicial porque en tería
-             *el compilador es lo suficientemente listo como para hacerlo el solito
-             *¿y quien soy yo para contradecirle?
-             *Bueno si me lo piden los jefes lo hago claro
-             */
-            auto llt = inferencer.loadModel();//con ollama se carga directamente en el primer punto así que no me preocupa
-            auto llg = inferencer.generateTextCompletion(prompts.at(i));
-            promptLogger.write2jsonline(promptmetrics::from_Llama(llt, llg, i));
-        }else {
-            auto llg = inferencer.generateTextCompletion(prompts.at(i));
-            promptLogger.write2jsonline(promptmetrics::from_Llama(llg, i));
+    try {
+        for (int i = 0; i < num_prompts_; i++) {
+            if (i == 0) {
+                auto llt = inferencer.loadModel();
+                auto llg = inferencer.generateTextCompletion(prompts.at(i));
+                promptLogger.write2jsonline(promptmetrics::from_Llama(llt, llg, i));
+            } else {
+                auto llg = inferencer.generateTextCompletion(prompts.at(i));
+                promptLogger.write2jsonline(promptmetrics::from_Llama(llg, i));
+            }
         }
-
+        inferencer.unloadModel();
+    } catch (...) {
+        hwMonitor.stop();
+        hwThread.join();
+        throw;
     }
-    //cierre
-    inferencer.unloadModel();
-    sleep(1);
     hwMonitor.stop();
     hwThread.join();
-return true;
-
+    return true;
 }
 bool LlamaTest::runTestType1_5seg() {
     promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
@@ -111,27 +107,30 @@ bool LlamaTest::runTestType1_5seg() {
     HardwareMeasurements hwMonitor(log_hw_file, 1.0); // muestrea cada 1 segundo
 
     std::thread hwThread([&hwMonitor]() {
-        hwMonitor.start(); // bloquea internamente hasta que se llame stop()
+        try { hwMonitor.start(); } catch (...) {}
     });
-    // bucle
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    for (int i = 0; i < num_prompts_; i++) {
-        if (i == 0) {
-            auto llt = inferencer.loadModel();//con ollama se carga directamente en el primer punto así que no me preocupa
-            auto llg = inferencer.generateTextCompletion(prompts.at(i));
-            promptLogger.write2jsonline(promptmetrics::from_Llama(llt, llg, i));
-        }else {
-            auto llg = inferencer.generateTextCompletion(prompts.at(i));
-            promptLogger.write2jsonline(promptmetrics::from_Llama(llg, i));
-        }
+    try {
         std::this_thread::sleep_for(std::chrono::seconds(5));
+        for (int i = 0; i < num_prompts_; i++) {
+            if (i == 0) {
+                auto llt = inferencer.loadModel();
+                auto llg = inferencer.generateTextCompletion(prompts.at(i));
+                promptLogger.write2jsonline(promptmetrics::from_Llama(llt, llg, i));
+            } else {
+                auto llg = inferencer.generateTextCompletion(prompts.at(i));
+                promptLogger.write2jsonline(promptmetrics::from_Llama(llg, i));
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+        }
+        inferencer.unloadModel();
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+    } catch (...) {
+        hwMonitor.stop();
+        hwThread.join();
+        throw;
     }
-    //cierre
-    inferencer.unloadModel();
-    std::this_thread::sleep_for(std::chrono::seconds(5));
     hwMonitor.stop();
     hwThread.join();
-
     return true;
 }
 

@@ -9,6 +9,25 @@
 #include "clients/LlamaTest.h"
 #include "clients/OllamaTest.h"
 
+InputConfiguration::InputConfiguration(nlohmann::json json_config) {
+    try {
+        inferenceEngine_ = json_config.at("inference_engine").get<InferenceEngines>();
+        testType_ = json_config.at("test_type").get<TestType>();
+        batch_size_ = json_config.at("batch_size").get<int>();
+        context_size_ = json_config.at("context_size").get<int>();
+        seed_ = json_config.at("seed").get<int>();
+        num_prompts_ = json_config.at("num_prompts").get<int>();
+        temperature_ = json_config.at("temperature").get<float>();
+        model_path_or_name_ = json_config.at("model_path_or_name").get<std::string>();
+        anotations = json_config.value("anotations", "EMPTY");
+        ollama_url_ = json_config.value("ollama_url", "http://localhost:11434");
+        og_config_json = json_config.dump();
+        hardwarePeriod = json_config.at("hardware_period").get<float>();
+    } catch (const nlohmann::json::exception& e) {
+        throw std::invalid_argument(std::string("JSON mal estructurado") + e.what());
+    }
+}
+
 void InputConfiguration::run() {
     // comienzo de timestamp es otrientativa
     this->timestamp_run_start = std::chrono::system_clock::now().time_since_epoch().count();
@@ -38,6 +57,7 @@ void InputConfiguration::run() {
     createResumen();
 }
 void InputConfiguration::runOllama() {
+    ollama::setServerURL(ollama_url_);
     OllamaTest ollamaTest(model_path_or_name_,run_path_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
     switch (testType_) {
         case TestType::TYPE_0:
@@ -99,3 +119,4 @@ void InputConfiguration::createResumen() {
     file.flush();
     file.close();
 }
+

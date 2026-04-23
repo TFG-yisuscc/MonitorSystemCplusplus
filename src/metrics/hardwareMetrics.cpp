@@ -65,9 +65,12 @@ void hardwareMetrics::fetchMemoryMetrics() {
 // ─── CPU ───────────────────────────────────────────────────────────────────────
 
 void hardwareMetrics::fetchCpuMetrics() {
-    this->cpu_ticks_ = getCpuTimes();
-    this->cpu_usage_ = CpuMonitor::getSystemCpuPercent();
-     //this->cpu_usage_engine_ = CpuMonitor::getEngineCpuPercent();
+ /*
+  *Puede parecer estupido  hacer lo que en la paractica es una llamada anidad en otra pero es simplemente por si se da el caso de
+  *tenenr que expandir la funciónes  y añadir más metrícas
+  */
+    getSystemCpuPercent();
+
 }
 
 
@@ -111,14 +114,15 @@ void hardwareMetrics::fetchSystemMetrics() {
 
 // Auxiliares
 
-double hardwareMetrics::getSystemCpuPercent() {
+bool hardwareMetrics::getSystemCpuPercent() {
 
     /* es funcionalmete identaca a psutils de python
      * pero es preferible unidades absolutas independientes.
+     * de ahi que establezca tambien los cpu_ticks
      */
     static cpu_ticks ct_prev{};
     cpu_ticks actual = getCpuTimes();
-
+    cpu_ticks_ = actual;
     double cpu_percent = 0.0;
     int64_t total_diff = actual.total() - ct_prev.total();
     int64_t active_diff = actual.active() - ct_prev.active();
@@ -126,7 +130,8 @@ double hardwareMetrics::getSystemCpuPercent() {
         cpu_percent = 100.0 * active_diff / total_diff;
     }
     ct_prev = actual;
-    return cpu_percent;
+    cpu_usage_ = cpu_percent;
+    return true;
 }
 
 int hardwareMetrics::getCpuCores() {
@@ -213,6 +218,10 @@ throttlingInfo hardwareMetrics::getThrottlingInfo() {
     info.freq_capped    = (raw & (1 << 1)) != 0;  // 0x00002
     info.throttled      = (raw & (1 << 2)) != 0;  // 0x00004
     info.soft_throttled = (raw & (1 << 3)) != 0;  // 0x00008
+    info.under_voltage_ocurred  = (raw & (1 << 16)) != 0; // 0x10000
+    info.freq_capped_ocurred = (raw & (1 << 17)) != 0;
+    info.throttled_ocurred = (raw & (1 << 18)) != 0;
+    info.soft_throttled_ocurred = (raw & (1 << 19)) != 0;
     return info;
 }
 double hardwareMetrics::getPower() {
@@ -246,9 +255,6 @@ double hardwareMetrics::getPower() {
     size_t n = std::min(currents.size(), voltages.size());
     for (size_t i = 0; i < n; i++)
         power += currents[i] * voltages[i];
-    //escalado de los valores sacado de aquí
-    // https://github.com/TFG-yisuscc/RPi5-power
-
     return power;
 }
 pid_t hardwareMetrics::getEnginePid() const {
