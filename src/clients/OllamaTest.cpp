@@ -76,28 +76,27 @@ bool OllamaTest::runTestType1() {
     std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
     Logger promptLogger(log_prompt_file);
     std::string log_hw_file = filepath_ + fmt::format("/{}_hw_metrics_{}_test1.jsonl", test_id, model_name_);
-    HardwareMeasurements hwMonitor(log_hw_file, 1.0); // muestrea cada 1 segundo
+    HardwareMeasurements hwMonitor(log_hw_file, 1.0);
     std::thread hwThread([&hwMonitor]() {
-        hwMonitor.start(); // bloquea internamente hasta que se llame stop()
+        try { hwMonitor.start(); } catch (...) {}
     });
-    // iteramos sobre los prompts
-    for (int i = 0; i < num_prompts_ && i < prompts.size(); i++) {
-        std::string prompt = prompts.at(i);
-        // creamos la request
-        ollama::request req = create_request( prompt);
-        // enviamos la request y obtenemos la respuesta
-        int64_t tinicio = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-        ollama::response response =  ollama::generate(req);
-        int64_t tfinal = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-        // LO  CNVETRIMOS EN UN PROMPTETRICS Y LO EJECUTAMOS
-        auto pm = metrics::promptmetrics::from_Ollama_json(response.as_json(), tinicio, tfinal, i);
-        promptLogger.write2jsonline(pm);
-        //pm.write2jsonline(filepath);
-
+    try {
+        for (int i = 0; i < num_prompts_ && i < (int)prompts.size(); i++) {
+            ollama::request req = create_request(prompts.at(i));
+            int64_t tinicio = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            ollama::response response = ollama::generate(req);
+            int64_t tfinal = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            auto pm = metrics::promptmetrics::from_Ollama_json(response.as_json(), tinicio, tfinal, i);
+            promptLogger.write2jsonline(pm);
+        }
+        ollamaClose();
+    } catch (...) {
+        hwMonitor.stop();
+        hwThread.join();
+        throw;
     }
-    ollamaClose();
     hwMonitor.stop();
     hwThread.join();
     return true;
@@ -106,34 +105,33 @@ bool OllamaTest::runTestType1_5seg() {
     // obtenemos los prompts
     promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
     std::vector<std::string> prompts = parser2.getPrompts();
-    //cramops el lloger de prompts
     std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
     Logger promptLogger(log_prompt_file);
     std::string log_hw_file = filepath_ + fmt::format("/{}_hw_metrics_{}_test1.jsonl", test_id, model_name_);
-    HardwareMeasurements hwMonitor(log_hw_file, 1.0); // muestrea cada 1 segundo
+    HardwareMeasurements hwMonitor(log_hw_file, 1.0);
     std::thread hwThread([&hwMonitor]() {
-        hwMonitor.start(); // bloquea internamente hasta que se llame stop()
+        try { hwMonitor.start(); } catch (...) {}
     });
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // iteramos sobre los prompts
-    for (int i = 0; i < num_prompts_ && i < prompts.size(); i++) {
-        std::string prompt = prompts.at(i);
-        // creamos la request
-        ollama::request req = create_request( prompt);
-        // enviamos la request y obtenemos la respuesta
-        int64_t tinicio = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-        ollama::response response =  ollama::generate(req);
-        int64_t tfinal = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-        // LO  CNVETRIMOS EN UN PROMPTETRICS Y LO EJECUTAMOS
-        auto pm = metrics::promptmetrics::from_Ollama_json(response.as_json(), tinicio, tfinal, i);
-        promptLogger.write2jsonline(pm);
-        //pm.write2jsonline(filepath);
+    try {
         std::this_thread::sleep_for(std::chrono::seconds(5));
+        for (int i = 0; i < num_prompts_ && i < (int)prompts.size(); i++) {
+            ollama::request req = create_request(prompts.at(i));
+            int64_t tinicio = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            ollama::response response = ollama::generate(req);
+            int64_t tfinal = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            auto pm = metrics::promptmetrics::from_Ollama_json(response.as_json(), tinicio, tfinal, i);
+            promptLogger.write2jsonline(pm);
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+        }
+        ollamaClose();
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+    } catch (...) {
+        hwMonitor.stop();
+        hwThread.join();
+        throw;
     }
-    ollamaClose();
-    std::this_thread::sleep_for(std::chrono::seconds(5));
     hwMonitor.stop();
     hwThread.join();
     return true;
@@ -153,11 +151,12 @@ ollama::request OllamaTest::create_request( const std::string& prompt)
     options["options"]["num_ctx"] = context_size_;
     options["options"]["num_batch"] = batch_size_;
     options["options"]["seed"] = seed_;
-    options["options"]["keep_alive"] =-1;
+  
 
     ollama::request req(model_name_, prompt, options,false);
     req["logprobs"] = true;
     req["verbose"]  = true;
+    req["keep_alive"] = -1; // importante para el test tipo 1 y 1.5
     return req;
 }
 bool OllamaTest::ollamaClose() {
@@ -167,11 +166,12 @@ bool OllamaTest::ollamaClose() {
     options["options"]["num_ctx"] = context_size_;
     options["options"]["num_batch"] = batch_size_;
     options["options"]["seed"] = seed_;
-    options["options"]["keep_alive"] =-1;
+    //options["options"]["keep_alive"] =-1;
     //e campo de prompt tien que estar vacío para que se cierre el modelo
     ollama::request req(model_name_, "", options,false);
     req["logprobs"] = true;
     req["verbose"]  = true;
+    req["keep_alive"] = -1;
     ollama::response response =  ollama::generate(req);
     return true;
 }

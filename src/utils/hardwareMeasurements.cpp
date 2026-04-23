@@ -21,6 +21,7 @@ HardwareMeasurements::~HardwareMeasurements() {
 
 void HardwareMeasurements::start() {
     //TODO adaptar harwaremetrics para quitar el inference engines o ponerlo de otro modo
+    // TODO hacer que sea autenticamente periodico
         running_.store(true);
         hardwareMetrics hm(InferenceEngines::OTHER);
         while (running_.load()) {

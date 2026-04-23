@@ -18,11 +18,15 @@ struct throttlingInfo {
     bool freq_capped;
     bool throttled;
     bool soft_throttled;
+    bool under_voltage_ocurred;
+    bool freq_capped_ocurred;
+    bool throttled_ocurred;
+    bool soft_throttled_ocurred;
 
 
     // otros bits de throttling pueden ser añadidos aquí
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(throttlingInfo, under_voltage,
-        freq_capped, throttled, soft_throttled)
+        freq_capped, throttled, soft_throttled, under_voltage_ocurred,freq_capped_ocurred, throttled_ocurred, soft_throttled_ocurred)
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(cpu_ticks, user, nice, system, idle, iowait, irq, softirq, steal)
 class hardwareMetrics {
@@ -79,7 +83,7 @@ private:
     void fetchMemoryMetrics();
     void fetchCpuMetrics();
     void fetchSystemMetrics();
-    double getSystemCpuPercent();
+    bool getSystemCpuPercent();
     static  int getCpuCores();
     std::vector<double> getCpuFrequencies();
     static double getCoreVoltage();
