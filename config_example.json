@@ -1,0 +1,13 @@
+{
+    "inference_engine": "OLLAMA",
+    "test_type": "TYPE_0",
+    "batch_size": 613,
+    "context_size": 2048,
+    "seed": 42,
+    "num_prompts": 10,
+    "temperature": 0.0,
+    "model_path_or_name": "granite4:micro-h",
+    "hardware_period": 0.5,
+    "anotations": "descripcion opcional del experimento",
+    "ollama_url": "http://localhost:11434"
+}
