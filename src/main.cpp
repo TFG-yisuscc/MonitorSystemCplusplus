@@ -23,6 +23,10 @@ static void printUsage(const char* program) {
 }
 
 int main(int argc, char *argv[]) {
+    ollama::setConnectionTimeout(600);
+    ollama::setReadTimeout(600);
+    ollama::setWriteTimeout(600);
+    ollama::show_requests(true);
     if (argc < 2) {
         printUsage(argv[0]);
         return 1;
