@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25.1)
 project(MonitorSystem)
 
 set(CMAKE_CXX_STANDARD 20)
-#uso el json que viene edefinido en el header de ollama, (problemas decompatibilidad de abi)
+#uso el json que viene edefinido en el header de ollama, (problemas decompatibilidad de abi1)
 find_package(llama CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 include_directories(includes)
@@ -36,3 +36,6 @@ add_executable(MonitorSystem src/main.cpp
 )
 target_link_libraries(MonitorSystem PRIVATE llama fmt::fmt)
 target_link_options(MonitorSystem PRIVATE -static) #enlazado estatico
+
+configure_file(${CMAKE_SOURCE_DIR}/config_example.json
+               ${CMAKE_BINARY_DIR}/config_example.json COPYONLY)

@@ -10,7 +10,7 @@
 #include "clients/OllamaTest.h"
 
 InputConfiguration::InputConfiguration(nlohmann::json json_config) {
-    try {
+    try { //TODO revisar los parametros
         inferenceEngine_ = json_config.at("inference_engine").get<InferenceEngines>();
         testType_ = json_config.at("test_type").get<TestType>();
         batch_size_ = json_config.at("batch_size").get<int>();
@@ -58,6 +58,12 @@ void InputConfiguration::run() {
 }
 void InputConfiguration::runOllama() {
     ollama::setServerURL(ollama_url_);
+    ollama::setConnectionTimeout(600);
+    ollama::setReadTimeout(600);
+    ollama::setWriteTimeout(600);
+    ollama::show_requests(true);
+    ollama::show_replies(true);
+
     OllamaTest ollamaTest(model_path_or_name_,run_path_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
     switch (testType_) {
         case TestType::TYPE_0:

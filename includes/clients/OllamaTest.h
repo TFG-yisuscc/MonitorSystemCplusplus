@@ -33,7 +33,7 @@ public:
     OllamaTest(nlohmann::json);
     bool runTestType0(); //solo se procesan los prompts y no se toman métricas de hardware.
     bool runTestType1();//paralelismo a nivel de multeples prompts (los hilos convergen al final de todos los prompts)
-    bool runTestType1_5seg();
+    bool runTestType1_5seg(); //5 seg entre prompts
 };
 
 

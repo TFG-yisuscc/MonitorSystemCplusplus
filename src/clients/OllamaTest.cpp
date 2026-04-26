@@ -158,6 +158,9 @@ ollama::request OllamaTest::create_request( const std::string& prompt)
     req["logprobs"] = true;
     req["verbose"]  = true;
     req["keep_alive"] = -1; // importante para el test tipo 1 y 1.5
+    std::cout << "=== REQUEST JSON ===" << std::endl;
+    std::cout << req.dump(2) << std::endl;
+    std::cout << "===================" << std::endl;
     return req;
 }
 bool OllamaTest::ollamaClose() {

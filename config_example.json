@@ -1,8 +1,8 @@
 {
     "inference_engine": "OLLAMA",
     "test_type": "TYPE_0",
-    "batch_size": 613,
-    "context_size": 2048,
+    "batch_size": 511,
+    "context_size": 1024,
     "seed": 42,
     "num_prompts": 10,
     "temperature": 0.0,
