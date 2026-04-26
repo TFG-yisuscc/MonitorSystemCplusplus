@@ -33,6 +33,9 @@ OllamaTest::OllamaTest(nlohmann::json testConfig) {
     seed_ = testConfig.contains("seed")? testConfig["seed"].get<int>() : throw std::runtime_error("seed is required in testConfig");
     num_prompts_ = testConfig.contains("num_prompts")? testConfig["num_prompts"].get<int>() : throw std::runtime_error("num_prompts is required in testConfig");
     ollama::setConnectionTimeout(600);
+    ollama::setReadTimeout(600);
+    ollama::setWriteTimeout(600);
+    ollama::show_requests(true);
 }
 
 
