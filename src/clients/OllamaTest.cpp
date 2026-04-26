@@ -46,10 +46,10 @@ bool OllamaTest::runTestType0() {
     promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
     std::vector<std::string> prompts = parser2.getPrompts();
     //cramops el lloger de prompts
-    std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
+    //std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
   //  Logger promptLogger(log_prompt_file);
     // iteramos sobre los prompts
-    std::string prompt = prompts.at(1);
+    std::string prompt = prompts.at(4);
     // creamos la request
     ollama::request req = create_request( prompt);
     ollama::response response =  ollama::generate(req);
