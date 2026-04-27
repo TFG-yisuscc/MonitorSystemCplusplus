@@ -6,8 +6,5 @@
   }, {
     "name" : "fmt",
     "version>=" : "12.1.0"
-  }, {
-    "name" : "magic-enum",
-    "version>=" : "0.9.7#1"
   } ]
 }

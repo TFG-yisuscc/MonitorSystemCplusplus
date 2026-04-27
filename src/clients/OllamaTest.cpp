@@ -49,7 +49,7 @@ bool OllamaTest::runTestType0() {
     //std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
   //  Logger promptLogger(log_prompt_file);
     // iteramos sobre los prompts
-    std::string prompt = prompts.at(4);
+    std::string prompt = prompts.at(0);
     // creamos la request
     ollama::request req = create_request( prompt);
     ollama::response response =  ollama::generate(req);

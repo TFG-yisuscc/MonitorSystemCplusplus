@@ -33,6 +33,7 @@ add_executable(MonitorSystem src/main.cpp
         includes/utils/enumConfig.h
         src/utils/hardwareMeasurements.cpp
         includes/utils/hardwareMeasurements.h
+        includes/utils/promptParser.h
 )
 target_link_libraries(MonitorSystem PRIVATE llama fmt::fmt)
 target_link_options(MonitorSystem PRIVATE -static) #enlazado estatico
