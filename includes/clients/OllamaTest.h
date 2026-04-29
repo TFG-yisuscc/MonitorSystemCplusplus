@@ -28,6 +28,7 @@ private:
 
     bool ollamaClose();
     ollama::request create_request(const std::string& prompt);
+    nlohmann::json generate_streaming(ollama::request& req);
 public:
     OllamaTest(std::string model_name,std::string filepath, float temperature, int batch_size, int context_size, int seed, int num_prompts);
     OllamaTest(nlohmann::json);

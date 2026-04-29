@@ -42,24 +42,39 @@ OllamaTest::OllamaTest(nlohmann::json testConfig) {
 
 // funciones de test
 bool OllamaTest::runTestType0() {
+    ollama::setConnectionTimeout(3600);
+    ollama::setReadTimeout(3600);
+    ollama::setWriteTimeout(3600);
+    ollama::show_requests(true);
+    ollama::show_replies(true);
     // obtenemos los prompts
     promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
     std::vector<std::string> prompts = parser2.getPrompts();
     //cramops el lloger de prompts
-    //std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
-  //  Logger promptLogger(log_prompt_file);
+    std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
+    Logger promptLogger(log_prompt_file);
+    for (int i = 0; i < num_prompts_; ++i) {
+        std::string prompt = prompts.at(i);
+        // creamos la request
+        ollama::request req = create_request( prompt);
+        int64_t tinicio = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        ollama::response response = ollama::generate(req);
+        int64_t tfinal = std::chrono::duration_cast<std::chrono::nanoseconds>(
+              std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        promptLogger.write2jsonline(metrics::promptmetrics::from_Ollama_json(response.as_json(), tinicio, tfinal, i));
+
+    }
     // iteramos sobre los prompts
-    std::string prompt = prompts.at(0);
-    // creamos la request
-    ollama::request req = create_request( prompt);
-    ollama::response response =  ollama::generate(req);
-    std::cout << response.as_json().dump(2);
     ollamaClose();
     return true;
 }
 
 bool OllamaTest::runTestType1() {
     // obtenemos los prompts
+    ollama::setConnectionTimeout(3600);
+    ollama::setReadTimeout(3600);
+    ollama::setWriteTimeout(3600);
     promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
     std::vector<std::string> prompts = parser2.getPrompts();
     //cramops el lloger de prompts
@@ -92,6 +107,9 @@ bool OllamaTest::runTestType1() {
     return true;
 }
 bool OllamaTest::runTestType1_5seg() {
+    ollama::setConnectionTimeout(3600);
+    ollama::setReadTimeout(3600);
+    ollama::setWriteTimeout(3600);
     // obtenemos los prompts
     promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
     std::vector<std::string> prompts = parser2.getPrompts();
@@ -147,10 +165,7 @@ ollama::request OllamaTest::create_request( const std::string& prompt)
     ollama::request req(model_name_, prompt, options,false);
     req["logprobs"] = true;
     req["verbose"]  = true;
-    req["keep_alive"] = 50; // importante para el test tipo 1 y 1.5
-    std::cout << "=== REQUEST JSON ===" << std::endl;
-    std::cout << req.dump(2) << std::endl;
-    std::cout << "===================" << std::endl;
+    req["keep_alive"] = -1;
     return req;
 }
 bool OllamaTest::ollamaClose() {
@@ -166,9 +181,6 @@ bool OllamaTest::ollamaClose() {
     req["logprobs"] = true;
     req["verbose"]  = true;
     req["keep_alive"] = 0;
-    std::cout << "=== REQUEST JSON ===" << std::endl;
-    std::cout << req.dump(2) << std::endl;
-    std::cout << "===================" << std::endl;
-    ollama::response response =  ollama::generate(req);
+
     return true;
 }

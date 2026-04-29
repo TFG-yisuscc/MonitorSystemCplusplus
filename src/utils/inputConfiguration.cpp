@@ -57,13 +57,6 @@ void InputConfiguration::run() {
     createResumen();
 }
 void InputConfiguration::runOllama() {
-    ollama::setServerURL(ollama_url_);
-    ollama::setConnectionTimeout(600);
-    ollama::setReadTimeout(600);
-    ollama::setWriteTimeout(600);
-    ollama::show_requests(true);
-    ollama::show_replies(true);
-
     OllamaTest ollamaTest(model_path_or_name_,run_path_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
     switch (testType_) {
         case TestType::TYPE_0:

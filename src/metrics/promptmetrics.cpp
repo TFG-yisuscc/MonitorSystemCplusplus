@@ -21,7 +21,7 @@ namespace metrics {
         std::string answer = json.contains("response")? json["response"].get<std::string>():"NONE";
         std::string logprobs = json.contains("logprobs")? json["logprobs"].dump():"NONE";
 
-        //TODO REHACER
+
         return promptmetrics(start_timestamp, finish_timestamp, model,InferenceEngines::OLLAMA, total_duration_ns,
                              prompt_eval_count, prompt_eval_duration_ns, eval_count,
                              eval_duration_ns, load_duration_ns, answer,logprobs, prompt_id);
