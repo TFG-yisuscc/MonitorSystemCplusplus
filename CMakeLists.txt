@@ -7,6 +7,22 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(llama CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 include_directories(includes)
+
+# Embed prompt list into the binary
+set(GENERATED_DIR "${CMAKE_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY "${GENERATED_DIR}")
+add_custom_command(
+    OUTPUT "${GENERATED_DIR}/prompt_data.h"
+    COMMAND ${CMAKE_COMMAND}
+        -DINPUT_FILE=${CMAKE_SOURCE_DIR}/prompt_list/instruction_following_eval_promt.jsonl
+        -DOUTPUT_FILE=${GENERATED_DIR}/prompt_data.h
+        -P ${CMAKE_SOURCE_DIR}/cmake/EmbedFile.cmake
+    DEPENDS "${CMAKE_SOURCE_DIR}/prompt_list/instruction_following_eval_promt.jsonl"
+    COMMENT "Embedding prompt list"
+    VERBATIM
+)
+include_directories("${GENERATED_DIR}")
+
 add_executable(MonitorSystem src/main.cpp
         src/metrics/promptmetrics.cpp
         includes/metrics/promptmetrics.h
@@ -35,6 +51,7 @@ add_executable(MonitorSystem src/main.cpp
         src/utils/hardwareMeasurements.cpp
         includes/utils/hardwareMeasurements.h
         includes/utils/promptParser.h
+        "${GENERATED_DIR}/prompt_data.h"
 )
 target_link_libraries(MonitorSystem PRIVATE llama fmt::fmt)
 target_link_options(MonitorSystem PRIVATE -static) #enlazado estatico

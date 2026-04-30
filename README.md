@@ -1,0 +1,131 @@
+# RPi5 Monitor del sistema para modelos largos de lenguaje
+
+[English version](README_eng.md)
+
+Herramienta de benchmarking para medir el rendimiento de modelos de lenguaje (LLM) en Raspberry Pi 5. Recoge métricas de inferencia (tiempos, tokens, log-probabilidades) y métricas hardware (temperatura, frecuencia, potencia, memoria, throttling) de forma simultánea durante la ejecución.
+
+> **Nota:** las métricas hardware utilizan interfaces específicas de Raspberry Pi (`vcgencmd`, `/sys/class/thermal`, etc.) y no funcionarán en otras plataformas.
+
+---
+
+## Formatos de entrada y salida
+
+### Entrada
+
+El programa acepta la configuración como fichero JSON o como argumento inline:
+
+```1
+# Desde fichero
+./MonitorSystem config_example.json
+
+# Inline
+./MonitorSystem --json '{"inference_engine":"OLLAMA", ...}'
+```
+
+Campos del JSON de configuración (ver también [`config_example.json`](config_example.json)):
+
+| Campo | Tipo | Requerido | Descripción |
+|-------|------|-----------|-------------|
+| `inference_engine` | string | sí | `"OLLAMA"` o `"LLAMA"` |
+| `test_type` | string | sí | `"TYPE_0"`, `"TYPE_1"` o `"TYPE_2"` |
+| `model_path_or_name` | string | sí | Nombre del modelo Ollama o ruta al fichero GGUF |
+| `batch_size` | int | sí | Tamaño de batch de procesado de tokens |
+| `context_size` | int | sí | Tamaño de la ventana de contexto (num_ctx) |
+| `seed` | int | sí | Semilla para reproducibilidad |
+| `num_prompts` | int | sí | Número de prompts a ejecutar |
+| `temperature` | float | sí | Temperatura de muestreo |
+| `hardware_period` | float | sí | Segundos entre muestras de hardware |
+| `anotations` | string | no | Descripción libre del experimento |
+| `ollama_url` | string | no | URL del servidor Ollama (default: `http://localhost:11434`) |
+
+La lista de prompts proviene del dataset [instruction_following_eval](https://github.com/google-research/google-research/tree/master/instruction_following_eval) de Google Research y se embebe en el binario en tiempo de compilación, por lo que no es necesario ningún fichero externo en tiempo de ejecución.
+
+### Tipos de test
+
+- **TYPE_0**: ejecuta `num_prompts` prompts y recoge métricas de prompt en fichero. Sin métricas de hardware.
+- **TYPE_1**: ejecuta `num_prompts` prompts de forma secuencial. Recoge métricas de prompt y hardware en paralelo.
+- **TYPE_2**: igual que TYPE_1 pero con una pausa de 5 segundos antes del primer prompt y entre cada prompt.
+
+### Salida
+
+Cada ejecución crea una carpeta `results/<timestamp_ns>/` con:
+
+```
+results/
+└── <timestamp_ns>/
+    ├── resumen.json                              # resumen de la ejecución
+    ├── <id>_prompt_metrics_<model>_test1.jsonl   # métricas por inferencia
+    └── <id>_hw_metrics_<model>_test1.jsonl       # métricas hardware periódicas
+```
+
+**`resumen.json`** — parámetros de la ejecución y timestamps de inicio y fin.
+
+**`*_prompt_metrics_*.jsonl`** — una línea JSON por prompt con:
+- `start_timestamp_ns`, `finish_timestamp_ns` — timestamps del cliente (ns)
+- `total_duration_ns`, `prompt_eval_duration_ns`, `eval_duration_ns`, `load_duration_ns` — tiempos internos del motor de inferencia (ns)
+- `prompt_eval_count`, `eval_count` — tokens de prompt y de respuesta
+- `answer` — texto de la respuesta
+- `tokenProb` — log-probabilidades por token (Ollama) o probabilidades (llama.cpp)
+- `engine`, `model`, `prompt_id`
+
+**`*_hw_metrics_*.jsonl`** — una línea JSON por muestra con:
+- `timestamp_` — timestamp de la muestra (ns)
+- `temperature_` — temperatura de la CPU (°C)
+- `frequency_` — frecuencia por núcleo (Hz)
+- `voltage_` — tensión del núcleo (V)
+- `fan_speed_` — velocidad del ventilador (RPM)
+- `internalpower_` — consumo de potencia interno (W) **¹**
+- `throttling_` — estado de throttling (under_voltage, freq_capped, throttled, soft_throttled y sus flags de ocurrencia)
+- `mem_total_`, `mem_used_`, `mem_percent_` — memoria RAM
+- `swap_total_`, `swap_used_`, `swap_percent_` — swap
+- `cpu_usage_`, `cpu_ticks_` — uso de CPU
+
+> **¹** La potencia reportada es la del sensor interno de la Raspberry Pi. **No incluye** el consumo de HATs ni de periféricos USB.
+
+---
+
+## Compilación y ejecución
+
+### Requisitos
+
+- CMake ≥ 3.25.1
+- C++20
+- [vcpkg](https://github.com/microsoft/vcpkg) con las siguientes dependencias:
+  - `llama-cpp` ≥ 7146
+  - `fmt` ≥ 12.1.0
+- Para el motor **OLLAMA**: [Ollama](https://ollama.com) instalado y ejecutándose en el sistema
+
+### Compilar
+
+```bash
+cmake -B build -DCMAKE_TOOLCHAIN_FILE=<ruta_a_vcpkg>/scripts/buildsystems/vcpkg.cmake
+cmake --build build
+```
+
+El binario resultante está enlazado de forma **estática** (`-static`), por lo que puede copiarse y ejecutarse directamente en la Raspberry Pi sin instalar dependencias adicionales (excepto Ollama si se usa ese motor).
+
+### Ejecutar
+
+```bash
+./MonitorSystem config_example.json
+```
+
+La lista de prompts está embebida en el binario; no se necesita ningún fichero externo.
+
+---
+
+## Librerías de terceros
+
+| Librería | Versión/fuente | Uso |
+|----------|----------------|-----|
+| [ollama-hpp](https://github.com/jmont-dev/ollama-hpp) | header-only en `includes/third_party/` | Cliente HTTP para la API de Ollama |
+| [nlohmann/json](https://github.com/nlohmann/json) | incluida en el header de ollama-hpp | Serialización/deserialización JSON |
+| [fmt](https://github.com/fmtlib/fmt) | vía vcpkg ≥ 12.1.0 | Formateo de cadenas |
+| [llama.cpp](https://github.com/ggml-org/llama.cpp) | vía vcpkg ≥ 7146 | Inferencia local con modelos GGUF |
+| [instruction_following_eval](https://github.com/google-research/google-research/tree/master/instruction_following_eval) | Google Research | Dataset de prompts usado en los tests |
+
+---
+
+## Licencia
+
+Pendiente de definir. Este proyecto forma parte de un Trabajo de Fin de Grado (TFG), lo que puede imponer restricciones sobre el tipo de licencia aplicable.

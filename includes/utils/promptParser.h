@@ -6,12 +6,12 @@
 #ifndef MONITORSYSTEM_PROMPTPARSER_H
 #define MONITORSYSTEM_PROMPTPARSER_H
 
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include "prompt_data.h"
 
 // #include "third_party/ollama.hpp"
 
@@ -21,49 +21,38 @@ private:
     std::string filePath_;
     std::vector<std::string> prompts;
 
-public:
-    explicit promptParser(std::string& filePath) {
-        filePath_ = filePath;
-        std::vector<std::string>   aux =  std::vector<std::string>();
-        // 1 leemos el json
-        std::ifstream file(filePath_);
-        if (!file.is_open()) {
-            throw std::runtime_error("Cannot open file" + filePath_);
-        }
-
+    void parseStream(std::istream& stream) {
         std::string line;
-        while (std::getline(file, line)) {
+        while (std::getline(stream, line)) {
             if (line.empty()) continue;
             nlohmann::json jsonObj = nlohmann::json::parse(line);
-            if (jsonObj.contains("prompt")) {
+            if (jsonObj.contains("prompt"))
                 prompts.push_back(jsonObj["prompt"].get<std::string>());
-            }
         }
-
     }
 
-    explicit promptParser(const char * str){
-        filePath_ = str;
-        //std::vector<std::string>   aux =  std::vector<std::string>();
-        // 1 leemos el json
+public:
+    promptParser() {
+        filePath_ = "<embedded>";
+        std::string data(embedded::prompt_data);
+        std::istringstream stream(data);
+        parseStream(stream);
+    }
+
+    explicit promptParser(std::string& filePath) {
+        filePath_ = filePath;
         std::ifstream file(filePath_);
-        if (!file.is_open()) {
+        if (!file.is_open())
             throw std::runtime_error("Cannot open file" + filePath_);
-        }
+        parseStream(file);
+    }
 
-        std::string line;
-        while (std::getline(file, line)) {
-            if (line.empty()) continue;
-            nlohmann::json jsonObj = nlohmann::json::parse(line);
-            if (jsonObj.contains("prompt")) {
-                prompts.push_back(jsonObj["prompt"].get<std::string>());
-            }
-        }// constructor
-
-
-
-
-
+    explicit promptParser(const char* str) {
+        filePath_ = str;
+        std::ifstream file(filePath_);
+        if (!file.is_open())
+            throw std::runtime_error("Cannot open file" + filePath_);
+        parseStream(file);
     }
 
     [[nodiscard]] std::string file_path() const {
@@ -73,9 +62,11 @@ public:
     [[nodiscard]] std::vector<std::string> getPrompts() const {
         return prompts;
     }
+
     std::string getPromptI(int i) {
         return prompts.at(i);
     }
+
     int getNPrompts() {
         return prompts.size();
     }

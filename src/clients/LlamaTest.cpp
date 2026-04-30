@@ -35,7 +35,7 @@ LlamaTest::LlamaTest(nlohmann::json configLlama) {
 
 bool LlamaTest::runTestType0() {
 //parser y logger ( //)
-    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    promptParser parser2 = promptParser();
     std::vector<std::string> prompts = parser2.getPrompts();
     std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,getCleanModelPath());
     Logger promptLogger(log_prompt_file);
@@ -65,7 +65,7 @@ inferencer.unloadModel();
 return true;
 }
 bool LlamaTest::runTestType1() {
-    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    promptParser parser2 = promptParser();
     std::vector<std::string> prompts = parser2.getPrompts();
     std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,getCleanModelPath());
     Logger promptLogger(log_prompt_file);
@@ -98,7 +98,7 @@ bool LlamaTest::runTestType1() {
     return true;
 }
 bool LlamaTest::runTestType1_5seg() {
-    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    promptParser parser2 = promptParser();
     std::vector<std::string> prompts = parser2.getPrompts();
     std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,getCleanModelPath());
     Logger promptLogger(log_prompt_file);

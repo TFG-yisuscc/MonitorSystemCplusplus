@@ -48,7 +48,7 @@ bool OllamaTest::runTestType0() {
     ollama::show_requests(true);
     ollama::show_replies(true);
     // obtenemos los prompts
-    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    promptParser parser2 = promptParser();
     std::vector<std::string> prompts = parser2.getPrompts();
     //cramops el lloger de prompts
     std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
@@ -75,7 +75,7 @@ bool OllamaTest::runTestType1() {
     ollama::setConnectionTimeout(3600);
     ollama::setReadTimeout(3600);
     ollama::setWriteTimeout(3600);
-    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    promptParser parser2 = promptParser();
     std::vector<std::string> prompts = parser2.getPrompts();
     //cramops el lloger de prompts
     std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
@@ -111,7 +111,7 @@ bool OllamaTest::runTestType1_5seg() {
     ollama::setReadTimeout(3600);
     ollama::setWriteTimeout(3600);
     // obtenemos los prompts
-    promptParser parser2 = promptParser("../prompt_list/instruction_following_eval_promt.jsonl");
+    promptParser parser2 = promptParser();
     std::vector<std::string> prompts = parser2.getPrompts();
     std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
     Logger promptLogger(log_prompt_file);
