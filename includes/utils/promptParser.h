@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
-#include "prompt_data.h"
+#include "prompt_data.h" // se incluye en tiempo de compilación
 
 // #include "third_party/ollama.hpp"
 
@@ -55,11 +55,11 @@ public:
         parseStream(file);
     }
 
-    [[nodiscard]] std::string file_path() const {
+    std::string file_path() const {
         return filePath_;
     }
 
-    [[nodiscard]] std::vector<std::string> getPrompts() const {
+  std::vector<std::string> getPrompts() const {
         return prompts;
     }
 
