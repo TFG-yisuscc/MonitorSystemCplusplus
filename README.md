@@ -129,3 +129,14 @@ La lista de prompts está embebida en el binario; no se necesita ningún fichero
 ## Licencia
 
 Pendiente de definir. Este proyecto forma parte de un Trabajo de Fin de Grado (TFG), lo que puede imponer restricciones sobre el tipo de licencia aplicable.
+
+---
+
+## Anotaciones / Observaciones
+
+- El código mezcla inglés y español (nombres de variables, comentarios, mensajes de log…). No hay una convención uniforme.
+
+- Respecto a el historial de commits de git inicial: 
+
+  ![git](https://imgs.xkcd.com/comics/git.png)
+- Creditos de la imagen: XKCD 1597 by Randall Munroe

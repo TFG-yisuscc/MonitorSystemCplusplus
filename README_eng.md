@@ -129,3 +129,14 @@ The prompt list is embedded in the binary; no external file is needed.
 ## License
 
 To be determined. This project is part of a Final Degree Project (TFG), which may impose restrictions on the type of license that can be applied.
+
+---
+
+## Notes / Observations
+
+- The codebase mixes English and Spanish (variable names, comments, log messages…). There is no consistent convention.
+
+- Regarding the early git commit history:
+
+  ![git](https://imgs.xkcd.com/comics/git.png)
+-   Image Credits: XKCD 1597 by Randall Munroe
