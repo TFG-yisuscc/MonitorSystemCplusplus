@@ -47,6 +47,10 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
             config_file >> json_config;
+            if (config_file.bad()) {
+                std::cerr << "Error: fallo de I/O leyendo el archivo: " << first_arg << "\n";
+                return 1;
+            }
         }
     } catch (const nlohmann::json::exception& e) {
         std::cerr << "Error al parsear el JSON: " << e.what() << "\n";

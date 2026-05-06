@@ -34,8 +34,8 @@ namespace metrics {
          */
         std::string model = llg.model_path;
         int64_t start_timestamp_ns = llt.inicioBackendInit;
-        int64_t finish_timestamp_ns = llg.finSample;
-        int64_t total_duration_ns = llg.finSample - llt.inicioBackendInit;
+        int64_t finish_timestamp_ns = llg.finDecode;
+        int64_t total_duration_ns = llg.finDecode - llt.inicioBackendInit;
         int64_t prompt_eval_count = llg.perfTimings.n_p_eval;
         int64_t prompt_eval_duration_ns = llg.perfTimings.t_p_eval_ms * 1'000'000;
         int64_t eval_count = llg.perfTimings.n_eval;
@@ -53,8 +53,8 @@ namespace metrics {
     promptmetrics promptmetrics::from_Llama(LlamaGenerateResult llg, int prompt_id) {
         std::string model = llg.model_path;
         int64_t start_timestamp_ns = llg.inicioDecode;
-        int64_t finish_timestamp_ns = llg.finSample;
-        int64_t total_duration_ns = llg.finDecode - llg.finSample;
+        int64_t finish_timestamp_ns = llg.finDecode;
+        int64_t total_duration_ns = llg.finDecode - llg.inicioDecode;
         int64_t prompt_eval_count = llg.perfTimings.n_p_eval;
         int64_t prompt_eval_duration_ns = llg.perfTimings.t_p_eval_ms * 1'000'000;
         int64_t eval_count = llg.perfTimings.n_eval;

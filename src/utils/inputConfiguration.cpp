@@ -9,8 +9,25 @@
 #include "clients/LlamaTest.h"
 #include "clients/OllamaTest.h"
 
+void InputConfiguration::validate() const {
+    if (temperature_ < 0.0f)
+        throw std::invalid_argument("temperature no puede ser negativa (valor: " + std::to_string(temperature_) + ")");
+    if (batch_size_ < 0)
+        throw std::invalid_argument("batch_size no puede ser negativo (valor: " + std::to_string(batch_size_) + ")");
+    if (context_size_ < 0)
+        throw std::invalid_argument("context_size no puede ser negativo (valor: " + std::to_string(context_size_) + ")");
+    if (seed_ < 0)
+        throw std::invalid_argument("seed no puede ser negativa (valor: " + std::to_string(seed_) + ")");
+    if (hardwarePeriod <= 0.0f)
+        throw std::invalid_argument("hardware_period debe ser mayor que cero (valor: " + std::to_string(hardwarePeriod) + ")");
+    if (num_prompts_ < 1 || num_prompts_ > 541)
+        throw std::invalid_argument("num_prompts debe estar entre 1 y 541 (valor: " + std::to_string(num_prompts_) + ")");
+    if (inferenceEngine_ == InferenceEngines::OTHER)
+        throw std::invalid_argument("El motor de inferencia OTHER no esta soportado");
+}
+
 InputConfiguration::InputConfiguration(nlohmann::json json_config) {
-    try { //TODO revisar los parametros
+    try {
         inferenceEngine_ = json_config.at("inference_engine").get<InferenceEngines>();
         testType_ = json_config.at("test_type").get<TestType>();
         batch_size_ = json_config.at("batch_size").get<int>();
@@ -19,13 +36,19 @@ InputConfiguration::InputConfiguration(nlohmann::json json_config) {
         num_prompts_ = json_config.at("num_prompts").get<int>();
         temperature_ = json_config.at("temperature").get<float>();
         model_path_or_name_ = json_config.at("model_path_or_name").get<std::string>();
-        anotations = json_config.value("anotations", "EMPTY");
+        if (json_config.contains("anotations")) {
+            const auto& a = json_config["anotations"];
+            anotations = a.is_string() ? a.get<std::string>() : a.dump();
+        } else {
+            anotations = "EMPTY";
+        }
         ollama_url_ = json_config.value("ollama_url", "http://localhost:11434");
         og_config_json = json_config.dump();
         hardwarePeriod = json_config.at("hardware_period").get<float>();
     } catch (const nlohmann::json::exception& e) {
         throw std::invalid_argument(std::string("JSON mal estructurado") + e.what());
     }
+    validate();
 }
 
 void InputConfiguration::run() {
@@ -57,7 +80,7 @@ void InputConfiguration::run() {
     createResumen();
 }
 void InputConfiguration::runOllama() {
-    OllamaTest ollamaTest(model_path_or_name_,run_path_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
+    OllamaTest ollamaTest(model_path_or_name_, run_path_, temperature_, batch_size_, context_size_, seed_, num_prompts_, hardwarePeriod);
     switch (testType_) {
         case TestType::TYPE_0:
             // Implementación del test para OLLAMA tipo 0
@@ -76,7 +99,7 @@ void InputConfiguration::runOllama() {
     }
 }
  void InputConfiguration::runLlama() {
-    LlamaTest llamaTest(run_path_,model_path_or_name_, temperature_, batch_size_, context_size_, seed_, num_prompts_);
+    LlamaTest llamaTest(run_path_, model_path_or_name_, temperature_, batch_size_, context_size_, seed_, num_prompts_, hardwarePeriod);
     switch (testType_) {
         case TestType::TYPE_0:
            llamaTest.runTestType0();
@@ -114,6 +137,7 @@ void InputConfiguration::createResumen() {
     if (!file.is_open()) {
         throw std::runtime_error("Could not open file to write the summary.");
     }
+    file.exceptions(std::ios::failbit | std::ios::badbit);
     file << resumen.dump(4);
     file.flush();
     file.close();

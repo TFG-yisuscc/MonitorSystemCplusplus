@@ -24,13 +24,15 @@ private:
     int context_size_;
     int seed_;
     int num_prompts_;
+    double hardwarePeriod_;
 
 
+    void ensureModelAvailable();
     bool ollamaClose();
     ollama::request create_request(const std::string& prompt);
     nlohmann::json generate_streaming(ollama::request& req);
 public:
-    OllamaTest(std::string model_name,std::string filepath, float temperature, int batch_size, int context_size, int seed, int num_prompts);
+    OllamaTest(std::string model_name, std::string filepath, float temperature, int batch_size, int context_size, int seed, int num_prompts, double hardwarePeriod = 0.5);
     OllamaTest(nlohmann::json);
     bool runTestType0(); //solo se procesan los prompts y no se toman métricas de hardware.
     bool runTestType1();//paralelismo a nivel de multeples prompts (los hilos convergen al final de todos los prompts)

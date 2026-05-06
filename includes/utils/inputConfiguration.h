@@ -22,7 +22,7 @@ public:
     int num_prompts_;
     float temperature_;
     std::string model_path_or_name_;
-    float hardwarePeriod;
+    float hardwarePeriod = 0.5f;
     std::string ollama_url_ = "http://localhost:11434";
 
     //los parametros del resumen  que se pueblan cuando se hace run
@@ -45,7 +45,7 @@ public:
           num_prompts_(num_prompts),
           temperature_(temperature),
           model_path_or_name_(model_path_or_name),
-          hardwarePeriod(hardwarePeriod) {};
+          hardwarePeriod(hardwarePeriod) { validate(); };
     // constructor a partir de un json con checkers
     InputConfiguration(nlohmann::json json_config);
 
@@ -53,6 +53,7 @@ public:
     void run();
 private:
 
+    void validate() const;
     void runOllama();
     void runLlama();
     void createResumen();

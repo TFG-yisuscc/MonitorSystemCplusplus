@@ -75,7 +75,7 @@ void hardwareMetrics::fetchCpuMetrics() {
 
 
 
-// ─── Sistema (temperatura, frecuencia, voltaje, fan, throttling) ───────────────
+// ─── Sistema (temperatura, frecuencia, voltaje, fan, throttling) ─────────
 void hardwareMetrics::fetchSystemMetrics() {
 
 

@@ -4,6 +4,7 @@
 
 #include "../../includes/utils/hardwareMeasurements.h"
 
+#include <thread>
 #include "metrics/hardwareMetrics.h"
 /*
  *Clase que controla la tomas de medidas */
@@ -20,16 +21,16 @@ HardwareMeasurements::~HardwareMeasurements() {
 }
 
 void HardwareMeasurements::start() {
-    //TODO adaptar harwaremetrics para quitar el inference engines o ponerlo de otro modo
-    // TODO hacer que sea autenticamente periodico
-        running_.store(true);
-        hardwareMetrics hm(InferenceEngines::OTHER);
-        while (running_.load()) {
-           hm.update();
-            logger_.write2jsonline(hm);
-            std::this_thread::sleep_for(std::chrono::duration<double>(periodo_s));
-        }
-
+    // Auténticamente períodica, el profe de SETR estarían orgullosos de mi./
+    running_.store(true);
+    hardwareMetrics hm(InferenceEngines::OTHER);
+    const auto period = std::chrono::duration<double>(periodo_s);
+    while (running_.load()) {
+        auto next_tick = std::chrono::steady_clock::now() + period;
+        hm.update();
+        logger_.write2jsonline(hm);
+        std::this_thread::sleep_until(next_tick);
+    }
 }
 void HardwareMeasurements::stop() {
  running_.store(false);

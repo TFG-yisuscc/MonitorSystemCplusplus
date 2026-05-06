@@ -92,7 +92,7 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
         throw std::runtime_error("Modelo no inicializado. Llama a loadModel() antes de generar texto.");
     }
     reset();
-    LlamaGenerateResult res;
+    LlamaGenerateResult res{};
     res.inicioPrefill = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     //1 tokenizo el answer (no se si es exacto?)
     int n_tokens = -llama_tokenize( // este es para obtener el tamaño exacto y no mas de tokenes
@@ -122,7 +122,9 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
     res.inicioDecode = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     //3 bucle de generación (sampling)
     int n_cur = tokens.size();
-    size_t n_max =    this->max_tokens_ <0 ? this->context_size_ - tokens.size(): this->max_tokens_;
+    size_t n_max = this->max_tokens_ < 0
+        ? static_cast<size_t>(std::max(0, this->context_size_ - static_cast<int>(tokens.size())))
+        : static_cast<size_t>(this->max_tokens_);
     std::vector<std::string>probs; //string para que no hala que hacer conversiones luego en la clase de prompmetrics
     std::string generated_text;
     while (n_cur < n_max) {
@@ -135,11 +137,11 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
         float max_logit = *std::max_element(logits, logits + n_vocab);
         float sum = 0.0f;
         for (int i = 0; i < n_vocab; i++)
-            sum += std::exp(logits[i] - max_logit);// ver si merece la pena hacer esto para evitar overflow
-        float prob = std::exp(logits[token_id] - max_logit) / sum;
+            sum += std::exp(logits[i] - max_logit);
+        float prob = (sum > 0.0f) ? std::exp(logits[token_id] - max_logit) / sum : 0.0f;
         probs.push_back(std::to_string(prob));
         char buf[256];
-        int n = llama_token_to_piece(this->vocab_, token_id, buf, sizeof(buf), 0, false);
+        int n = llama_token_to_piece(this->vocab_, token_id, buf, sizeof(buf) - 1, 0, false);
         if (n > 0) {
             buf[n] = '\0';
             generated_text += buf;

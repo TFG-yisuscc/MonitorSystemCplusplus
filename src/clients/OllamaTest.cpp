@@ -4,14 +4,17 @@
 
 
 #include "clients/OllamaTest.h"
+#include <chrono>
+#include <iostream>
 #include <fmt/format.h>
 #include "metrics/Logger.h"
 #include "utils/hardwareMeasurements.h"
 
 
 // constructores
-OllamaTest::OllamaTest(std::string model_name,std::string filepath,float temperature, int batch_size, int context_size, int seed, int num_prompts)
+OllamaTest::OllamaTest(std::string model_name, std::string filepath, float temperature, int batch_size, int context_size, int seed, int num_prompts, double hardwarePeriod)
 {
+    test_id = std::chrono::system_clock::now().time_since_epoch().count();
     model_name_ = model_name;
     filepath_ = filepath;
     temperature_ = temperature;
@@ -19,9 +22,11 @@ OllamaTest::OllamaTest(std::string model_name,std::string filepath,float tempera
     context_size_ = context_size;
     seed_ = seed;
     num_prompts_ = num_prompts;
+    hardwarePeriod_ = hardwarePeriod;
 }
 
 OllamaTest::OllamaTest(nlohmann::json testConfig) {
+    test_id = std::chrono::system_clock::now().time_since_epoch().count();
     model_name_ = testConfig.contains("model_name")
                       ? testConfig["model_name"].get<std::string>()
                       : throw std::runtime_error("model_name is required in testConfig");
@@ -40,11 +45,30 @@ OllamaTest::OllamaTest(nlohmann::json testConfig) {
 
 
 
+void OllamaTest::ensureModelAvailable() {
+    auto models = ollama::list_models();
+    bool found = false;
+    for (const auto& m : models) {
+        if (m == model_name_) { found = true; break; }
+        // si el usuario no especificó tag, comparamos con ":latest"
+        if (model_name_.find(':') == std::string::npos && m == model_name_ + ":latest") {
+            found = true; break;
+        }
+    }
+    if (!found) {
+        fmt::print("Modelo '{}' no encontrado localmente, descargando...\n", model_name_);
+        if (!ollama::pull_model(model_name_))
+            throw std::runtime_error("No se pudo descargar el modelo: " + model_name_);
+        fmt::print("Modelo '{}' descargado correctamente.\n", model_name_);
+    }
+}
+
 // funciones de test
 bool OllamaTest::runTestType0() {
     ollama::setConnectionTimeout(3600);
     ollama::setReadTimeout(3600);
     ollama::setWriteTimeout(3600);
+    ensureModelAvailable();
     ollama::show_requests(true);
     ollama::show_replies(true);
     // obtenemos los prompts
@@ -71,19 +95,21 @@ bool OllamaTest::runTestType0() {
 }
 
 bool OllamaTest::runTestType1() {
-    // obtenemos los prompts
     ollama::setConnectionTimeout(3600);
     ollama::setReadTimeout(3600);
     ollama::setWriteTimeout(3600);
+    ensureModelAvailable();
     promptParser parser2 = promptParser();
     std::vector<std::string> prompts = parser2.getPrompts();
     //cramops el lloger de prompts
     std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
     Logger promptLogger(log_prompt_file);
     std::string log_hw_file = filepath_ + fmt::format("/{}_hw_metrics_{}_test1.jsonl", test_id, model_name_);
-    HardwareMeasurements hwMonitor(log_hw_file, 1.0);
+    HardwareMeasurements hwMonitor(log_hw_file, hardwarePeriod_);
     std::thread hwThread([&hwMonitor]() {
-        try { hwMonitor.start(); } catch (...) {}
+        try { hwMonitor.start(); }
+        catch (const std::exception& e) { std::cerr << "HW monitor error: " << e.what() << std::endl; }
+        catch (...) { std::cerr << "HW monitor: unknown error" << std::endl; }
     });
     try {
         for (int i = 0; i < num_prompts_ && i < (int)prompts.size(); i++) {
@@ -110,15 +136,17 @@ bool OllamaTest::runTestType1_5seg() {
     ollama::setConnectionTimeout(3600);
     ollama::setReadTimeout(3600);
     ollama::setWriteTimeout(3600);
-    // obtenemos los prompts
+    ensureModelAvailable();
     promptParser parser2 = promptParser();
     std::vector<std::string> prompts = parser2.getPrompts();
     std::string log_prompt_file = filepath_ + fmt::format("/{}_prompt_metrics_{}_test1.jsonl",test_id,model_name_);
     Logger promptLogger(log_prompt_file);
     std::string log_hw_file = filepath_ + fmt::format("/{}_hw_metrics_{}_test1.jsonl", test_id, model_name_);
-    HardwareMeasurements hwMonitor(log_hw_file, 1.0);
+    HardwareMeasurements hwMonitor(log_hw_file, hardwarePeriod_);
     std::thread hwThread([&hwMonitor]() {
-        try { hwMonitor.start(); } catch (...) {}
+        try { hwMonitor.start(); }
+        catch (const std::exception& e) { std::cerr << "HW monitor error: " << e.what() << std::endl; }
+        catch (...) { std::cerr << "HW monitor: unknown error" << std::endl; }
     });
     try {
         std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -170,17 +198,12 @@ ollama::request OllamaTest::create_request( const std::string& prompt)
 }
 bool OllamaTest::ollamaClose() {
     nlohmann::json options;
-    //menos el keep alive el resto de opciones dan igual
     options["options"]["temperature"] = temperature_;
     options["options"]["num_ctx"] = context_size_;
     options["options"]["num_batch"] = batch_size_;
     options["options"]["seed"] = seed_;
-    //options["options"]["keep_alive"] =-1;
-    //e campo de prompt tien que estar vacío para que se cierre el modelo
-    ollama::request req(model_name_, "", options,false);
-    req["logprobs"] = true;
-    req["verbose"]  = true;
+    ollama::request req(model_name_, "", options, false);
     req["keep_alive"] = 0;
-
+    ollama::generate(req);
     return true;
 }
