@@ -31,8 +31,9 @@ public:
     long long timestamp_run_end  = 0L;
     std::string run_path_ = "EMPTY";
     //estas son un poco reduundantes creo yo
-    std::string anotations ="EMPTY"; // este lo recibe del la configuración y lo mente en el resumen
+    std::string annotations ="EMPTY"; // este lo recibe del la configuración y lo mente en el resumen
     std::string og_config_json = "EMPTY"; // para poder revisarlo luego en caso de que sea necesarío o para poder acceder a campos origenales
+    nlohmann::json model_info_ = nullptr; // metadatos de arquitectura del modelo, rellenados al inicio del run
 
 
     InputConfiguration(InferenceEngines inference_engine, TestType test_type, int batch_size, int context_size,

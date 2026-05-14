@@ -93,6 +93,7 @@ LlamaLoadTimestamps LlamaInferencer::loadModel() {
     }
     reset();
     LlamaGenerateResult res{};
+    res.model_path = model_path_;
     res.inicioPrefill = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     //1 tokenizo el answer (no se si es exacto?)
     int n_tokens = -llama_tokenize( // este es para obtener el tamaño exacto y no mas de tokenes

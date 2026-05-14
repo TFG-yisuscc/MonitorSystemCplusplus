@@ -18,7 +18,7 @@ static void printUsage(const char* program) {
               << "  temperature        : float\n"
               << "  model_path_or_name : string\n"
               << "  hardware_period    : float (segundos entre mediciones)\n"
-              << "  anotations         : string (opcional)\n"
+              << "  annotations        : string (opcional)\n"
               << "  ollama_url         : string (opcional, default: http://localhost:11434)\n";
 }
 
