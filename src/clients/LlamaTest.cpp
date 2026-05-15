@@ -14,7 +14,7 @@
 #include "utils/LlamaInferencer.h"
 #include "utils/promptParser.h"
 using namespace metrics;
-LlamaTest::LlamaTest(std::string filepath, std::string model_path, int temperature, int batch_size, int context_size, int seed, int num_prompts, double hardwarePeriod) {
+LlamaTest::LlamaTest(std::string filepath, std::string model_path, float temperature, int batch_size, int context_size, int seed, int num_prompts, double hardwarePeriod) {
     test_id = std::chrono::system_clock::now().time_since_epoch().count();
     filepath_ = filepath;
     model_path_ = model_path;
@@ -30,7 +30,7 @@ LlamaTest::LlamaTest(nlohmann::json configLlama) {
     test_id = std::chrono::system_clock::now().time_since_epoch().count();
     model_path_= configLlama.contains("model_path")? configLlama["model_path"].get<std::string>():
     throw std::runtime_error("model_path is required in the config");
-    temperature_ = configLlama.contains("temperature")? configLlama["temperature"].get<int>():throw std::runtime_error("temperature is required in the config");
+    temperature_ = configLlama.contains("temperature")? configLlama["temperature"].get<float>():throw std::runtime_error("temperature is required in the config");
     batch_size_ = configLlama.contains("batch_size")? configLlama["batch_size"].get<int>():throw std::runtime_error("batch_size is required in the config");
     context_size_ = configLlama.contains("context_size")? configLlama["context_size"].get<int>():throw std::runtime_error("context_size is required in the config");
     seed_ = configLlama.contains("seed")? configLlama["seed"].get<int>():throw std::runtime_error("seed is required in the config");

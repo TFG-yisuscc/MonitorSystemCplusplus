@@ -54,7 +54,7 @@ namespace metrics {
         std::string model = llg.model_path;
         int64_t start_timestamp_ns = llg.inicioDecode;
         int64_t finish_timestamp_ns = llg.finDecode;
-        int64_t total_duration_ns = llg.finDecode - llg.inicioDecode;
+        int64_t total_duration_ns = llg.finDecode - llg.inicioPrefill;
         int64_t prompt_eval_count = llg.perfTimings.n_p_eval;
         int64_t prompt_eval_duration_ns = llg.perfTimings.t_p_eval_ms * 1'000'000;
         int64_t eval_count = llg.perfTimings.n_eval;

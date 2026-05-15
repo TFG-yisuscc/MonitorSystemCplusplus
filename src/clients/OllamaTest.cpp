@@ -31,7 +31,7 @@ OllamaTest::OllamaTest(nlohmann::json testConfig) {
                       ? testConfig["model_name"].get<std::string>()
                       : throw std::runtime_error("model_name is required in testConfig");
     temperature_ = testConfig.contains("temperature")
-                       ? testConfig["temperature"].get<int>()
+                       ? testConfig["temperature"].get<float>()
                        : throw std::runtime_error("temperature is required in testConfig");
     batch_size_ =  testConfig.contains("batch_size")? testConfig["batch_size"].get<int>() : throw std::runtime_error("batch_size is required in testConfig");
     context_size_ = testConfig.contains("context_size")? testConfig["context_size"].get<int>() : throw std::runtime_error("context_size is required in testConfig");
