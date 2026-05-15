@@ -4,6 +4,8 @@
 
 #include "clients/LlamaTest.h"
 
+#include <chrono>
+#include <iostream>
 #include <fmt/format.h>
 
 #include "metrics/Logger.h"
@@ -12,21 +14,23 @@
 #include "utils/LlamaInferencer.h"
 #include "utils/promptParser.h"
 using namespace metrics;
-LlamaTest::LlamaTest(std::string filepath,std::string model_path, int temperature, int batch_size, int context_size, int seed, int num_prompts) {
+LlamaTest::LlamaTest(std::string filepath, std::string model_path, float temperature, int batch_size, int context_size, int seed, int num_prompts, double hardwarePeriod) {
+    test_id = std::chrono::system_clock::now().time_since_epoch().count();
     filepath_ = filepath;
-    //test_id = test_id2;
     model_path_ = model_path;
     temperature_ = temperature;
     batch_size_ = batch_size;
     context_size_ = context_size;
     seed_ = seed;
     num_prompts_ = num_prompts;
+    hardwarePeriod_ = hardwarePeriod;
 }
 
 LlamaTest::LlamaTest(nlohmann::json configLlama) {
+    test_id = std::chrono::system_clock::now().time_since_epoch().count();
     model_path_= configLlama.contains("model_path")? configLlama["model_path"].get<std::string>():
     throw std::runtime_error("model_path is required in the config");
-    temperature_ = configLlama.contains("temperature")? configLlama["temperature"].get<int>():throw std::runtime_error("temperature is required in the config");
+    temperature_ = configLlama.contains("temperature")? configLlama["temperature"].get<float>():throw std::runtime_error("temperature is required in the config");
     batch_size_ = configLlama.contains("batch_size")? configLlama["batch_size"].get<int>():throw std::runtime_error("batch_size is required in the config");
     context_size_ = configLlama.contains("context_size")? configLlama["context_size"].get<int>():throw std::runtime_error("context_size is required in the config");
     seed_ = configLlama.contains("seed")? configLlama["seed"].get<int>():throw std::runtime_error("seed is required in the config");
@@ -71,10 +75,12 @@ bool LlamaTest::runTestType1() {
     Logger promptLogger(log_prompt_file);
     std::string log_hw_file = filepath_ + fmt::format("/{}_hw_metrics_{}_test1.jsonl", test_id, getCleanModelPath());
     LlamaInferencer inferencer(model_path_, temperature_, batch_size_, context_size_, seed_);
-    HardwareMeasurements hwMonitor(log_hw_file, 1.0); // muestrea cada 1 segundo
+    HardwareMeasurements hwMonitor(log_hw_file, hardwarePeriod_);
 
     std::thread hwThread([&hwMonitor]() {
-        try { hwMonitor.start(); } catch (...) {}
+        try { hwMonitor.start(); }
+        catch (const std::exception& e) { std::cerr << "HW monitor error: " << e.what() << std::endl; }
+        catch (...) { std::cerr << "HW monitor: unknown error" << std::endl; }
     });
     try {
         for (int i = 0; i < num_prompts_; i++) {
@@ -104,10 +110,12 @@ bool LlamaTest::runTestType1_5seg() {
     Logger promptLogger(log_prompt_file);
     std::string log_hw_file = filepath_ + fmt::format("/{}_hw_metrics_{}_test1.jsonl", test_id, getCleanModelPath());
     LlamaInferencer inferencer(model_path_, temperature_, batch_size_, context_size_, seed_);
-    HardwareMeasurements hwMonitor(log_hw_file, 1.0); // muestrea cada 1 segundo
+    HardwareMeasurements hwMonitor(log_hw_file, hardwarePeriod_);
 
     std::thread hwThread([&hwMonitor]() {
-        try { hwMonitor.start(); } catch (...) {}
+        try { hwMonitor.start(); }
+        catch (const std::exception& e) { std::cerr << "HW monitor error: " << e.what() << std::endl; }
+        catch (...) { std::cerr << "HW monitor: unknown error" << std::endl; }
     });
     try {
         std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -138,6 +146,6 @@ bool LlamaTest::runTestType1_5seg() {
 std::string LlamaTest::getCleanModelPath() {
     std::filesystem::path p(model_path_);
     if (p.extension() == ".gguf")
-        return p.stem().string();  // stem() = nombre sin extensión
-    return "";
+        return p.stem().string();
+    return p.filename().string();
 }

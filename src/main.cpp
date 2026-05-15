@@ -18,7 +18,7 @@ static void printUsage(const char* program) {
               << "  temperature        : float\n"
               << "  model_path_or_name : string\n"
               << "  hardware_period    : float (segundos entre mediciones)\n"
-              << "  anotations         : string (opcional)\n"
+              << "  annotations        : string (opcional)\n"
               << "  ollama_url         : string (opcional, default: http://localhost:11434)\n";
 }
 
@@ -47,6 +47,10 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
             config_file >> json_config;
+            if (config_file.bad()) {
+                std::cerr << "Error: fallo de I/O leyendo el archivo: " << first_arg << "\n";
+                return 1;
+            }
         }
     } catch (const nlohmann::json::exception& e) {
         std::cerr << "Error al parsear el JSON: " << e.what() << "\n";

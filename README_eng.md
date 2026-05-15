@@ -35,7 +35,7 @@ Configuration JSON fields (see also [`config_example.json`](config_example.json)
 | `num_prompts` | int | yes | Number of prompts to run |
 | `temperature` | float | yes | Sampling temperature |
 | `hardware_period` | float | yes | Seconds between hardware samples |
-| `anotations` | string | no | Free-text experiment description |
+| `annotations` | string/JSON object | no | Free-text experiment description; if a JSON object it is merged with model metadata |
 | `ollama_url` | string | no | Ollama server URL (default: `http://localhost:11434`) |
 
 The prompt list comes from the [instruction_following_eval](https://github.com/google-research/google-research/tree/master/instruction_following_eval) dataset by Google Research and is embedded into the binary at compile time, so no external file is needed at runtime.
@@ -58,7 +58,7 @@ results/
     └── <id>_hw_metrics_<model>_test1.jsonl       # periodic hardware metrics
 ```
 
-**`resumen.json`** — run parameters and start/end timestamps.
+**`resumen.json`** — run parameters and start/end timestamps. Includes `hardware_period` as a top-level field and `annotations` as a JSON object containing model architecture metadata under the `model_info` key (`n_params`, `architecture`, `embedding_length`, `n_layers`, `max_context`, `quantization`).
 
 **`*_prompt_metrics_*.jsonl`** — one JSON line per prompt with:
 - `start_timestamp_ns`, `finish_timestamp_ns` — client-side timestamps (ns)

@@ -35,7 +35,7 @@ Campos del JSON de configuración (ver también [`config_example.json`](config_e
 | `num_prompts` | int | sí | Número de prompts a ejecutar |
 | `temperature` | float | sí | Temperatura de muestreo |
 | `hardware_period` | float | sí | Segundos entre muestras de hardware |
-| `anotations` | string | no | Descripción libre del experimento |
+| `annotations` | string/objeto JSON | no | Descripción libre del experimento; si es un objeto JSON se fusiona con los metadatos del modelo |
 | `ollama_url` | string | no | URL del servidor Ollama (default: `http://localhost:11434`) |
 
 La lista de prompts proviene del dataset [instruction_following_eval](https://github.com/google-research/google-research/tree/master/instruction_following_eval) de Google Research y se embebe en el binario en tiempo de compilación, por lo que no es necesario ningún fichero externo en tiempo de ejecución.
@@ -58,7 +58,7 @@ results/
     └── <id>_hw_metrics_<model>_test1.jsonl       # métricas hardware periódicas
 ```
 
-**`resumen.json`** — parámetros de la ejecución y timestamps de inicio y fin.
+**`resumen.json`** — parámetros de la ejecución y timestamps de inicio y fin. Incluye `hardware_period` como campo de primer nivel y `annotations` como objeto JSON con los metadatos de arquitectura del modelo bajo la clave `model_info` (`n_params`, `architecture`, `embedding_length`, `n_layers`, `max_context`, `quantization`).
 
 **`*_prompt_metrics_*.jsonl`** — una línea JSON por prompt con:
 - `start_timestamp_ns`, `finish_timestamp_ns` — timestamps del cliente (ns)

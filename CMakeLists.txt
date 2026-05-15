@@ -54,7 +54,7 @@ add_executable(MonitorSystem src/main.cpp
         "${GENERATED_DIR}/prompt_data.h"
 )
 target_link_libraries(MonitorSystem PRIVATE llama fmt::fmt)
-target_link_options(MonitorSystem PRIVATE -static) #enlazado estatico
+target_link_options(MonitorSystem PRIVATE -static) #enlazado estatico — causa linking muy lento y no funciona con dlopen/getaddrinfo
 
 configure_file(${CMAKE_SOURCE_DIR}/config_example.json
                ${CMAKE_BINARY_DIR}/config_example.json COPYONLY)

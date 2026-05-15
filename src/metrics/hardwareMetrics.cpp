@@ -75,7 +75,7 @@ void hardwareMetrics::fetchCpuMetrics() {
 
 
 
-// ─── Sistema (temperatura, frecuencia, voltaje, fan, throttling) ───────────────
+// ─── Sistema (temperatura, frecuencia, voltaje, fan, throttling) ─────────
 void hardwareMetrics::fetchSystemMetrics() {
 
 
@@ -218,10 +218,10 @@ throttlingInfo hardwareMetrics::getThrottlingInfo() {
     info.freq_capped    = (raw & (1 << 1)) != 0;  // 0x00002
     info.throttled      = (raw & (1 << 2)) != 0;  // 0x00004
     info.soft_throttled = (raw & (1 << 3)) != 0;  // 0x00008
-    info.under_voltage_ocurred  = (raw & (1 << 16)) != 0; // 0x10000
-    info.freq_capped_ocurred = (raw & (1 << 17)) != 0;
-    info.throttled_ocurred = (raw & (1 << 18)) != 0;
-    info.soft_throttled_ocurred = (raw & (1 << 19)) != 0;
+    info.under_voltage_occurred  = (raw & (1 << 16)) != 0; // 0x10000
+    info.freq_capped_occurred = (raw & (1 << 17)) != 0;
+    info.throttled_occurred = (raw & (1 << 18)) != 0;
+    info.soft_throttled_occurred = (raw & (1 << 19)) != 0;
     return info;
 }
 double hardwareMetrics::getPower() {

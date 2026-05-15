@@ -22,27 +22,25 @@ Logger::~Logger() {
     logfile_.close();
 }
 
- bool Logger::write2jsonline(metrics::promptmetrics pm) {
-    nlohmann::json jsonObj = pm;
+bool Logger::write2jsonline(metrics::promptmetrics pm) {
     if (!logfile_.is_open()) {
         std::cerr << "Error al abrir el archivo: " << filepath_ << std::endl;
         return false;
     }
-    logfile_<< jsonObj.dump() << std::endl;
+    nlohmann::json jsonObj = pm;
+    logfile_ << jsonObj.dump() << std::endl;
     logfile_.flush();
-    //file.close();
     return true;
 }
 
 bool Logger::write2jsonline(hardwareMetrics hm) {
-    nlohmann::json jsonObj = hm;
     if (!logfile_.is_open()) {
         std::cerr << "Error al abrir el archivo: " << filepath_ << std::endl;
         return false;
     }
-    logfile_<< jsonObj.dump() << std::endl;
+    nlohmann::json jsonObj = hm;
+    logfile_ << jsonObj.dump() << std::endl;
     logfile_.flush();
-    //file.close();
     return true;
 }
 
