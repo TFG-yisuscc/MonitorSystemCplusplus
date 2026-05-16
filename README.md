@@ -26,17 +26,21 @@ Campos del JSON de configuración (ver también [`config_example.json`](config_e
 
 | Campo | Tipo | Requerido | Descripción |
 |-------|------|-----------|-------------|
-| `inference_engine` | string | sí | `"OLLAMA"` o `"LLAMA"` |
+| `inference_engine` | string | sí | `"OLLAMA"`, `"LLAMA"` o `"HAILO_OLLAMA"` |
 | `test_type` | string | sí | `"TYPE_0"`, `"TYPE_1"` o `"TYPE_2"` |
-| `model_path_or_name` | string | sí | Nombre del modelo Ollama o ruta al fichero GGUF |
-| `batch_size` | int | sí | Tamaño de batch de procesado de tokens |
-| `context_size` | int | sí | Tamaño de la ventana de contexto (num_ctx) |
-| `seed` | int | sí | Semilla para reproducibilidad |
-| `num_prompts` | int | sí | Número de prompts a ejecutar |
+| `model_path_or_name` | string | sí | Nombre del modelo Ollama/Hailo o ruta al fichero GGUF |
+| `batch_size` | int | sí | Tamaño de batch de procesado de tokens ¹ |
+| `context_size` | int | sí | Tamaño de la ventana de contexto (num_ctx) ¹ |
+| `seed` | int | sí | Semilla para reproducibilidad (acepta negativos; -1 = aleatoria) |
+| `num_prompts` | int | sí | Número de prompts a ejecutar (1–541) |
 | `temperature` | float | sí | Temperatura de muestreo |
 | `hardware_period` | float | sí | Segundos entre muestras de hardware |
 | `annotations` | string/objeto JSON | no | Descripción libre del experimento; si es un objeto JSON se fusiona con los metadatos del modelo |
-| `ollama_url` | string | no | URL del servidor Ollama (default: `http://localhost:11434`) |
+| `ollama_url` | string | no | URL del servidor Ollama (default: `http://localhost:11434`). Solo para `OLLAMA`. |
+| `hailo_server_host` | string | no | Host del servidor hailo-ollama (default: `localhost`). Solo para `HAILO_OLLAMA`. |
+| `hailo_server_port` | int | no | Puerto del servidor hailo-ollama (default: `8000`). Solo para `HAILO_OLLAMA`. |
+
+> **¹** `batch_size` y `context_size` se registran en el resumen pero **no tienen efecto en tiempo de ejecución para `HAILO_OLLAMA`**: los modelos Hailo se compilan como ficheros HEF con estos parámetros fijados en tiempo de compilación.
 
 La lista de prompts proviene del dataset [instruction_following_eval](https://github.com/google-research/google-research/tree/master/instruction_following_eval) de Google Research y se embebe en el binario en tiempo de compilación, por lo que no es necesario ningún fichero externo en tiempo de ejecución.
 
@@ -68,6 +72,17 @@ results/
 - `tokenProb` — log-probabilidades por token (Ollama) o probabilidades (llama.cpp)
 - `engine`, `model`, `prompt_id`
 
+**Campos a `0` intencionalmente para `HAILO_OLLAMA`:** la API de hailo-ollama solo devuelve `total_duration` y `eval_count` en la respuesta final. Los campos siguientes se fijan a `0` por diseño al no estar disponibles en el servidor:
+
+| Campo | Motivo |
+|-------|--------|
+| `prompt_eval_count` | No reportado por hailo-ollama |
+| `prompt_eval_duration_ns` | No reportado por hailo-ollama |
+| `eval_duration_ns` | No reportado por hailo-ollama |
+| `load_duration_ns` | No reportado por hailo-ollama |
+
+`tokenProb` se establece a `"NONE"` ya que hailo-ollama no expone log-probabilidades por token.
+
 **`*_hw_metrics_*.jsonl`** — una línea JSON por muestra con:
 - `timestamp_` — timestamp de la muestra (ns)
 - `temperature_` — temperatura de la CPU (°C)
@@ -94,6 +109,7 @@ results/
   - `llama-cpp` ≥ 7146
   - `fmt` ≥ 12.1.0
 - Para el motor **OLLAMA**: [Ollama](https://ollama.com) instalado y ejecutándose en el sistema
+- Para el motor **HAILO_OLLAMA**: servidor [hailo-ollama](https://github.com/hailo-ai/hailo_model_zoo_genai) accesible en red (por defecto `localhost:8000`)
 
 ### Compilar
 
@@ -122,6 +138,7 @@ La lista de prompts está embebida en el binario; no se necesita ningún fichero
 | [nlohmann/json](https://github.com/nlohmann/json) | incluida en el header de ollama-hpp | Serialización/deserialización JSON |
 | [fmt](https://github.com/fmtlib/fmt) | vía vcpkg ≥ 12.1.0 | Formateo de cadenas |
 | [llama.cpp](https://github.com/ggml-org/llama.cpp) | vía vcpkg ≥ 7146 | Inferencia local con modelos GGUF |
+| `hailo_http_client.h` | header-only en `includes/third_party/` | Cliente HTTP POSIX ligero para hailo-ollama (sin TLS, sin dependencias externas) |
 | [instruction_following_eval](https://github.com/google-research/google-research/tree/master/instruction_following_eval) | Google Research | Dataset de prompts usado en los tests |
 
 ---

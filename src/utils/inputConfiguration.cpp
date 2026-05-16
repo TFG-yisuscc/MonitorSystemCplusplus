@@ -8,6 +8,7 @@
 
 #include "clients/LlamaTest.h"
 #include "clients/OllamaTest.h"
+#include "clients/haoiloOllamaTest.h"
 
 void InputConfiguration::validate() const {
     if (temperature_ < 0.0f)
@@ -16,14 +17,14 @@ void InputConfiguration::validate() const {
         throw std::invalid_argument("batch_size no puede ser negativo (valor: " + std::to_string(batch_size_) + ")");
     if (context_size_ < 0)
         throw std::invalid_argument("context_size no puede ser negativo (valor: " + std::to_string(context_size_) + ")");
-    if (seed_ < 0)
-        throw std::invalid_argument("seed no puede ser negativa (valor: " + std::to_string(seed_) + ")");
     if (hardwarePeriod <= 0.0f)
         throw std::invalid_argument("hardware_period debe ser mayor que cero (valor: " + std::to_string(hardwarePeriod) + ")");
     if (num_prompts_ < 1 || num_prompts_ > 541)
         throw std::invalid_argument("num_prompts debe estar entre 1 y 541 (valor: " + std::to_string(num_prompts_) + ")");
     if (inferenceEngine_ == InferenceEngines::OTHER)
         throw std::invalid_argument("El motor de inferencia OTHER no esta soportado");
+    if (inferenceEngine_ == InferenceEngines::HAILO_OLLAMA && hailo_server_port_ <= 0)
+        throw std::invalid_argument("hailo_server_port debe ser mayor que cero");
 }
 
 InputConfiguration::InputConfiguration(nlohmann::json json_config) {
@@ -46,6 +47,8 @@ InputConfiguration::InputConfiguration(nlohmann::json json_config) {
             annotations = "EMPTY";
         }
         ollama_url_ = json_config.value("ollama_url", "http://localhost:11434");
+        hailo_server_host_ = json_config.value("hailo_server_host", std::string("localhost"));
+        hailo_server_port_ = json_config.value("hailo_server_port", 8000);
         og_config_json = json_config.dump();
         hardwarePeriod = json_config.at("hardware_period").get<float>();
     } catch (const nlohmann::json::exception& e) {
@@ -73,6 +76,9 @@ void InputConfiguration::run() {
             break;
         case InferenceEngines::LLAMA:
             runLlama();
+            break;
+        case InferenceEngines::HAILO_OLLAMA:
+            runHailoOllama();
             break;
         default:
             throw std::invalid_argument("Invalid inference engine selected.");
@@ -212,6 +218,26 @@ static nlohmann::json fetchLlamaModelInfo(const std::string& model_path) {
     return info;
 }
 
+void InputConfiguration::runHailoOllama() {
+    model_info_ = nullptr; // hailo no expone metadata estructurada via /api/show
+    HaoiloOllamaTest hailoTest(model_path_or_name_, run_path_, temperature_,
+                               seed_, num_prompts_, /*num_predict=*/512,
+                               hardwarePeriod, hailo_server_host_, hailo_server_port_);
+    switch (testType_) {
+        case TestType::TYPE_0:
+            hailoTest.runTestType0();
+            break;
+        case TestType::TYPE_1:
+            hailoTest.runTestType1();
+            break;
+        case TestType::TYPE_2:
+            hailoTest.runTestType1_5seg();
+            break;
+        default:
+            throw std::invalid_argument("Invalid test type selected for HAILO_OLLAMA.");
+    }
+}
+
 void InputConfiguration::runOllama() {
     try {
         ollama::setServerURL(ollama_url_);
@@ -282,6 +308,10 @@ void InputConfiguration::createResumen() {
     resumen["temperature"] = temperature_;
     resumen["model_path_or_name"] = model_path_or_name_;
     resumen["hardware_period"] = hardwarePeriod;
+    if (inferenceEngine_ == InferenceEngines::HAILO_OLLAMA) {
+        resumen["hailo_server_host"] = hailo_server_host_;
+        resumen["hailo_server_port"] = hailo_server_port_;
+    }
     resumen["timestamp_run_start"] = timestamp_run_start;
     resumen["timestamp_run_end"] = timestamp_run_end;
 

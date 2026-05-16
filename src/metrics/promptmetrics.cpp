@@ -27,6 +27,25 @@ namespace metrics {
                              eval_duration_ns, load_duration_ns, answer,logprobs, prompt_id);
     }
 
+    promptmetrics promptmetrics::from_HailoOllama_json(nlohmann::json json, int64_t start_timestamp,
+                                                       int64_t finish_timestamp, int prompt_id) {
+        std::string model   = json.value("model", "DEFAULT_MODEL");
+        std::string answer  = "NONE";
+        if (json.contains("message") && json["message"].contains("content"))
+            answer = json["message"]["content"].get<std::string>();
+
+        int64_t total_duration_ns      = json.value("total_duration",      int64_t(0));
+        int64_t eval_count             = json.value("eval_count",           int64_t(0));
+        int64_t prompt_eval_count      = json.value("prompt_eval_count",    int64_t(0));
+        int64_t prompt_eval_duration_ns= json.value("prompt_eval_duration", int64_t(0));
+        int64_t eval_duration_ns       = json.value("eval_duration",        int64_t(0));
+        int64_t load_duration_ns       = json.value("load_duration",        int64_t(0));
+
+        return promptmetrics(start_timestamp, finish_timestamp, model, InferenceEngines::HAILO_OLLAMA,
+                             total_duration_ns, prompt_eval_count, prompt_eval_duration_ns,
+                             eval_count, eval_duration_ns, load_duration_ns, answer, "NONE", prompt_id);
+    }
+
     promptmetrics promptmetrics::from_Llama(LlamaLoadTimestamps llt, LlamaGenerateResult llg, int prompt_id) {
         /*
          *Tiene en cuenta el tiempo de carga

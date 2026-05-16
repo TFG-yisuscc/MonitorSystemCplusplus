@@ -13,7 +13,7 @@
 #include <stdexcept>
 #include "prompt_data.h" // se incluye en tiempo de compilación
 
-// #include "third_party/ollama.hpp"
+ #include "third_party/ollama.hpp"
 
 
 class promptParser {
