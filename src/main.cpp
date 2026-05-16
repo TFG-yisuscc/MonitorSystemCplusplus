@@ -9,7 +9,7 @@ static void printUsage(const char* program) {
               << "  " << program << " <config.json>           carga configuracion desde archivo JSON\n"
               << "  " << program << " --json '<json_string>'  pasa el JSON como argumento de consola\n"
               << "\nCampos requeridos en el JSON:\n"
-              << "  inference_engine   : \"LLAMA\" | \"OLLAMA\"\n"
+              << "  inference_engine   : \"LLAMA\" | \"OLLAMA\" | \"HAILO_OLLAMA\"\n"
               << "  test_type          : \"TYPE_0\" | \"TYPE_1\" | \"TYPE_2\"\n"
               << "  batch_size         : int\n"
               << "  context_size       : int\n"
@@ -19,7 +19,9 @@ static void printUsage(const char* program) {
               << "  model_path_or_name : string\n"
               << "  hardware_period    : float (segundos entre mediciones)\n"
               << "  annotations        : string (opcional)\n"
-              << "  ollama_url         : string (opcional, default: http://localhost:11434)\n";
+              << "  ollama_url         : string (opcional, default: http://localhost:11434)\n"
+              << "  hailo_server_host  : string (opcional, default: localhost)\n"
+              << "  hailo_server_port  : int    (opcional, default: 8000)\n";
 }
 
 int main(int argc, char *argv[]) {

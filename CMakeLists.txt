@@ -52,6 +52,9 @@ add_executable(MonitorSystem src/main.cpp
         includes/utils/hardwareMeasurements.h
         includes/utils/promptParser.h
         "${GENERATED_DIR}/prompt_data.h"
+        includes/clients/hailoOllamaTest.cpp
+        src/clients/hailoOllamaTest.h
+        includes/third_party/hailo_http_client.h
 )
 target_link_libraries(MonitorSystem PRIVATE llama fmt::fmt)
 target_link_options(MonitorSystem PRIVATE -static) #enlazado estatico — causa linking muy lento y no funciona con dlopen/getaddrinfo

@@ -8,6 +8,8 @@
 
 #include "clients/LlamaTest.h"
 #include "clients/OllamaTest.h"
+#include "../../src/clients/hailoOllamaTest.h"
+#include "third_party/hailo_http_client.h"
 
 void InputConfiguration::validate() const {
     if (temperature_ < 0.0f)
@@ -24,6 +26,8 @@ void InputConfiguration::validate() const {
         throw std::invalid_argument("num_prompts debe estar entre 1 y 541 (valor: " + std::to_string(num_prompts_) + ")");
     if (inferenceEngine_ == InferenceEngines::OTHER)
         throw std::invalid_argument("El motor de inferencia OTHER no esta soportado");
+    if (inferenceEngine_ == InferenceEngines::HAILO_OLLAMA && hailo_server_port_ <= 0)
+        throw std::invalid_argument("hailo_server_port debe ser mayor que cero");
 }
 
 InputConfiguration::InputConfiguration(nlohmann::json json_config) {
@@ -45,7 +49,9 @@ InputConfiguration::InputConfiguration(nlohmann::json json_config) {
         } else {
             annotations = "EMPTY";
         }
-        ollama_url_ = json_config.value("ollama_url", "http://localhost:11434");
+        ollama_url_         = json_config.value("ollama_url",         "http://localhost:11434");
+        hailo_server_host_  = json_config.value("hailo_server_host",  "localhost");
+        hailo_server_port_  = json_config.value("hailo_server_port",  8000);
         og_config_json = json_config.dump();
         hardwarePeriod = json_config.at("hardware_period").get<float>();
     } catch (const nlohmann::json::exception& e) {
@@ -73,6 +79,9 @@ void InputConfiguration::run() {
             break;
         case InferenceEngines::LLAMA:
             runLlama();
+            break;
+        case InferenceEngines::HAILO_OLLAMA:
+            runHailoOllama();
             break;
         default:
             throw std::invalid_argument("Invalid inference engine selected.");
@@ -268,6 +277,40 @@ void InputConfiguration::runLlama() {
             break;
         default:
             throw std::invalid_argument("Invalid test type selected for LLAMA.");
+    }
+}
+
+void InputConfiguration::runHailoOllama() {
+    // Intentamos obtener info del modelo vía /api/show (puede no estar implementado completamente).
+    try {
+        hailo_http::Client http(hailo_server_host_, hailo_server_port_);
+        nlohmann::json body;
+        body["model"] = model_path_or_name_;
+        auto resp = http.post("/api/show", body.dump());
+        if (resp.status_code == 200) {
+            auto j = nlohmann::json::parse(resp.body);
+            if (!j.contains("error"))
+                model_info_ = extractOllamaModelInfo(j);
+        }
+    } catch (...) {}
+    if (model_info_.is_null())
+        model_info_ = nlohmann::json::object();
+
+    HailoOllamaTest hailoTest(model_path_or_name_, run_path_, temperature_,
+                               batch_size_, context_size_, seed_, num_prompts_,
+                               hardwarePeriod, hailo_server_host_, hailo_server_port_);
+    switch (testType_) {
+        case TestType::TYPE_0:
+            hailoTest.runTestType0();
+            break;
+        case TestType::TYPE_1:
+            hailoTest.runTestType1();
+            break;
+        case TestType::TYPE_2:
+            hailoTest.runTestType1_5seg();
+            break;
+        default:
+            throw std::invalid_argument("Invalid test type selected for HAILO_OLLAMA.");
     }
 }
 

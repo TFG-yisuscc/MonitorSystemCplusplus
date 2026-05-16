@@ -8,12 +8,13 @@
 
 #include <third_party/ollama.hpp> //para que no haya conflictos con el json de vcpkg
 
-enum InferenceEngines {LLAMA, OLLAMA, OTHER};
+enum InferenceEngines {LLAMA, OLLAMA, HAILO_OLLAMA, OTHER};
 
 NLOHMANN_JSON_SERIALIZE_ENUM(InferenceEngines, {
-    {LLAMA,  "LLAMA"},
-    {OLLAMA, "OLLAMA"},
-    {OTHER,  "OTHER"},
+    {LLAMA,        "LLAMA"},
+    {OLLAMA,       "OLLAMA"},
+    {HAILO_OLLAMA, "HAILO_OLLAMA"},
+    {OTHER,        "OTHER"},
 })
 
 #endif //MONITORSYSTEM_INFERENCEENGINES_H

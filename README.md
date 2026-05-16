@@ -26,17 +26,23 @@ Campos del JSON de configuración (ver también [`config_example.json`](config_e
 
 | Campo | Tipo | Requerido | Descripción |
 |-------|------|-----------|-------------|
-| `inference_engine` | string | sí | `"OLLAMA"` o `"LLAMA"` |
+| `inference_engine` | string | sí | `"OLLAMA"`, `"LLAMA"` o `"HAILO_OLLAMA"` |
 | `test_type` | string | sí | `"TYPE_0"`, `"TYPE_1"` o `"TYPE_2"` |
-| `model_path_or_name` | string | sí | Nombre del modelo Ollama o ruta al fichero GGUF |
-| `batch_size` | int | sí | Tamaño de batch de procesado de tokens |
-| `context_size` | int | sí | Tamaño de la ventana de contexto (num_ctx) |
-| `seed` | int | sí | Semilla para reproducibilidad |
+| `model_path_or_name` | string | sí | Nombre del modelo (Ollama/Hailo) o ruta al fichero GGUF |
+| `batch_size` | int | sí | Tamaño de batch de procesado de tokens ² |
+| `context_size` | int | sí | Tamaño de la ventana de contexto (num_ctx) ² |
+| `seed` | int | sí | Semilla para reproducibilidad ³ |
 | `num_prompts` | int | sí | Número de prompts a ejecutar |
 | `temperature` | float | sí | Temperatura de muestreo |
 | `hardware_period` | float | sí | Segundos entre muestras de hardware |
 | `annotations` | string/objeto JSON | no | Descripción libre del experimento; si es un objeto JSON se fusiona con los metadatos del modelo |
 | `ollama_url` | string | no | URL del servidor Ollama (default: `http://localhost:11434`) |
+| `hailo_server_host` | string | no | Host del servidor Hailo-Ollama (default: `localhost`) |
+| `hailo_server_port` | int | no | Puerto del servidor Hailo-Ollama (default: `8000`) |
+
+> **²** `batch_size` y `context_size` son **ignorados por `HAILO_OLLAMA`**: los modelos Hailo se compilan como ficheros HEF con estos parámetros fijados en tiempo de compilación. Se registran en el `resumen.json` como documentación pero no se envían al servidor.
+>
+> **³** `seed` se envía al servidor Hailo-Ollama pero puede no ser honrado dependiendo de la implementación.
 
 La lista de prompts proviene del dataset [instruction_following_eval](https://github.com/google-research/google-research/tree/master/instruction_following_eval) de Google Research y se embebe en el binario en tiempo de compilación, por lo que no es necesario ningún fichero externo en tiempo de ejecución.
 
@@ -68,6 +74,20 @@ results/
 - `tokenProb` — log-probabilidades por token (Ollama) o probabilidades (llama.cpp)
 - `engine`, `model`, `prompt_id`
 
+Disponibilidad de campos según motor:
+
+| Campo | OLLAMA | LLAMA | HAILO_OLLAMA |
+|-------|:------:|:-----:|:------------:|
+| `total_duration_ns` | ✓ servidor | ✓ calculado | ✓ servidor |
+| `prompt_eval_duration_ns` | ✓ servidor | ✓ servidor | ✓ medido cliente ⁴ |
+| `eval_duration_ns` | ✓ servidor | ✓ servidor | ✓ medido cliente ⁴ |
+| `load_duration_ns` | ✓ servidor | ✓ servidor | 0 (no disponible) |
+| `prompt_eval_count` | ✓ servidor | ✓ servidor | 0 (no disponible) |
+| `eval_count` | ✓ servidor | ✓ servidor | ✓ servidor |
+| `tokenProb` | ✓ (log-prob) | ✓ (prob) | `"NONE"` |
+
+> **⁴** En `HAILO_OLLAMA` los tiempos de prefill y decode se miden en el cliente usando streaming NDJSON: `prompt_eval_duration` = tiempo hasta el primer token; `eval_duration` = tiempo entre el primer y el último token.
+
 **`*_hw_metrics_*.jsonl`** — una línea JSON por muestra con:
 - `timestamp_` — timestamp de la muestra (ns)
 - `temperature_` — temperatura de la CPU (°C)
@@ -94,6 +114,7 @@ results/
   - `llama-cpp` ≥ 7146
   - `fmt` ≥ 12.1.0
 - Para el motor **OLLAMA**: [Ollama](https://ollama.com) instalado y ejecutándose en el sistema
+- Para el motor **HAILO_OLLAMA**: [Hailo-Ollama](https://github.com/hailo-ai/hailo_model_zoo_genai) instalado mediante el paquete `hailo_gen_ai_model_zoo_<ver>.deb` y el servicio ejecutándose en el puerto 8000
 
 ### Compilar
 
@@ -119,6 +140,7 @@ La lista de prompts está embebida en el binario; no se necesita ningún fichero
 | Librería | Versión/fuente | Uso |
 |----------|----------------|-----|
 | [ollama-hpp](https://github.com/jmont-dev/ollama-hpp) | header-only en `includes/third_party/` | Cliente HTTP para la API de Ollama |
+| `hailo_http_client.h` | header-only en `includes/third_party/` | Cliente HTTP/1.1 POSIX puro para Hailo-Ollama (sin dependencias externas) |
 | [nlohmann/json](https://github.com/nlohmann/json) | incluida en el header de ollama-hpp | Serialización/deserialización JSON |
 | [fmt](https://github.com/fmtlib/fmt) | vía vcpkg ≥ 12.1.0 | Formateo de cadenas |
 | [llama.cpp](https://github.com/ggml-org/llama.cpp) | vía vcpkg ≥ 7146 | Inferencia local con modelos GGUF |
