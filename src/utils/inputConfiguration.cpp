@@ -5,6 +5,7 @@
 #include "utils/inputConfiguration.h"
 
 #include <stdexcept>
+#include <unordered_map>
 
 #include "clients/LlamaTest.h"
 #include "clients/OllamaTest.h"
@@ -195,16 +196,36 @@ static nlohmann::json fetchLlamaModelInfo(const std::string& model_path) {
                 : nlohmann::json(nullptr);
         }
 
-        // Quantization from filename (convention: stem ends in .Q4_0 etc.)
-        auto stem = std::filesystem::path(model_path).stem().string();
-        auto dot  = stem.rfind('.');
-        if (dot != std::string::npos) {
-            info["quantization"] = stem.substr(dot + 1);
-        } else {
+        // Quantization: read general.file_type from GGUF metadata (llama_ftype enum)
+        static const std::unordered_map<int, std::string> ftype_names = {
+            {0,  "F32"},     {1,  "F16"},     {2,  "Q4_0"},    {3,  "Q4_1"},
+            {7,  "Q8_0"},    {8,  "Q5_0"},    {9,  "Q5_1"},    {10, "Q2_K"},
+            {11, "Q3_K_S"},  {12, "Q3_K_M"},  {13, "Q3_K_L"},  {14, "Q4_K_S"},
+            {15, "Q4_K_M"},  {16, "Q5_K_S"},  {17, "Q5_K_M"},  {18, "Q6_K"},
+            {19, "IQ2_XXS"}, {20, "IQ2_XS"},  {21, "Q2_K_S"},  {22, "IQ3_XS"},
+            {23, "IQ3_XXS"}, {24, "IQ1_S"},   {25, "IQ4_NL"},  {26, "IQ3_S"},
+            {27, "IQ3_M"},   {28, "IQ2_S"},   {29, "IQ2_M"},   {30, "IQ4_XS"},
+            {31, "IQ1_M"},   {32, "BF16"},    {36, "TQ1_0"},   {37, "TQ2_0"},
+            {38, "MXFP4_MOE"},
+        };
+        bool quant_found = false;
+        if (llama_model_meta_val_str(model, "general.file_type", buf, sizeof(buf)) > 0) {
+            try {
+                int ftype = std::stoi(buf);
+                auto it = ftype_names.find(ftype);
+                if (it != ftype_names.end()) {
+                    info["quantization"] = it->second;
+                    quant_found = true;
+                }
+            } catch (...) {}
+        }
+        if (!quant_found) {
+            // Fallback: extract suffix after last '-' in stem if it looks like a quant tag
+            auto stem = std::filesystem::path(model_path).stem().string();
             auto dash = stem.rfind('-');
             if (dash != std::string::npos) {
                 auto suf = stem.substr(dash + 1);
-                if (!suf.empty() && (suf[0] == 'Q' || suf[0] == 'F' || suf[0] == 'I'))
+                if (!suf.empty() && (suf[0] == 'Q' || suf[0] == 'F' || suf[0] == 'I' || suf[0] == 'B' || suf[0] == 'T'))
                     info["quantization"] = suf;
                 else
                     info["quantization"] = "unknown";
