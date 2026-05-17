@@ -24,6 +24,8 @@ public:
     std::string model_path_or_name_;
     float hardwarePeriod = 0.5f;
     std::string ollama_url_ = "http://localhost:11434";
+    std::string hailo_server_host_ = "localhost";
+    int hailo_server_port_ = 8000;
 
     //los parametros del resumen  que se pueblan cuando se hace run
     // nio se si es la mejor opción
@@ -57,6 +59,7 @@ private:
     void validate() const;
     void runOllama();
     void runLlama();
+    void runHailoOllama();
     void createResumen();
 
 

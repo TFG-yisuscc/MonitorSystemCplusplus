@@ -26,17 +26,21 @@ Configuration JSON fields (see also [`config_example.json`](config_example.json)
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `inference_engine` | string | yes | `"OLLAMA"` or `"LLAMA"` |
+| `inference_engine` | string | yes | `"OLLAMA"`, `"LLAMA"` or `"HAILO_OLLAMA"` |
 | `test_type` | string | yes | `"TYPE_0"`, `"TYPE_1"` or `"TYPE_2"` |
-| `model_path_or_name` | string | yes | Ollama model name or path to a GGUF file |
-| `batch_size` | int | yes | Token processing batch size |
-| `context_size` | int | yes | Context window size (num_ctx) |
-| `seed` | int | yes | Seed for reproducibility |
-| `num_prompts` | int | yes | Number of prompts to run |
+| `model_path_or_name` | string | yes | Ollama/Hailo model name or path to a GGUF file |
+| `batch_size` | int | yes | Token processing batch size ¹ |
+| `context_size` | int | yes | Context window size (num_ctx) ¹ |
+| `seed` | int | yes | Reproducibility seed (negatives accepted; -1 = random) |
+| `num_prompts` | int | yes | Number of prompts to run (1–541) |
 | `temperature` | float | yes | Sampling temperature |
 | `hardware_period` | float | yes | Seconds between hardware samples |
 | `annotations` | string/JSON object | no | Free-text experiment description; if a JSON object it is merged with model metadata |
-| `ollama_url` | string | no | Ollama server URL (default: `http://localhost:11434`) |
+| `ollama_url` | string | no | Ollama server URL (default: `http://localhost:11434`). `OLLAMA` only. |
+| `hailo_server_host` | string | no | hailo-ollama server host (default: `localhost`). `HAILO_OLLAMA` only. |
+| `hailo_server_port` | int | no | hailo-ollama server port (default: `8000`). `HAILO_OLLAMA` only. |
+
+> **¹** `batch_size` and `context_size` are recorded in the summary but **have no effect at runtime for `HAILO_OLLAMA`**: Hailo models are compiled as HEF files with these parameters fixed at compile time.
 
 The prompt list comes from the [instruction_following_eval](https://github.com/google-research/google-research/tree/master/instruction_following_eval) dataset by Google Research and is embedded into the binary at compile time, so no external file is needed at runtime.
 
@@ -68,6 +72,17 @@ results/
 - `tokenProb` — per-token log-probabilities (Ollama) or probabilities (llama.cpp)
 - `engine`, `model`, `prompt_id`
 
+**Fields intentionally set to `0` for `HAILO_OLLAMA`:** the hailo-ollama API only returns `total_duration` and `eval_count` in the final response. The following fields are set to `0` by design because the server does not expose them:
+
+| Field | Reason |
+|-------|--------|
+| `prompt_eval_count` | Not reported by hailo-ollama |
+| `prompt_eval_duration_ns` | Not reported by hailo-ollama |
+| `eval_duration_ns` | Not reported by hailo-ollama |
+| `load_duration_ns` | Not reported by hailo-ollama |
+
+`tokenProb` is set to `"NONE"` as hailo-ollama does not expose per-token log-probabilities.
+
 **`*_hw_metrics_*.jsonl`** — one JSON line per sample with:
 - `timestamp_` — sample timestamp (ns)
 - `temperature_` — CPU temperature (°C)
@@ -94,6 +109,7 @@ results/
   - `llama-cpp` ≥ 7146
   - `fmt` ≥ 12.1.0
 - For the **OLLAMA** engine: [Ollama](https://ollama.com) installed and running on the system
+- For the **HAILO_OLLAMA** engine: [hailo-ollama](https://github.com/hailo-ai/hailo_model_zoo_genai) server reachable over the network (default `localhost:8000`)
 
 ### Build
 
@@ -122,6 +138,7 @@ The prompt list is embedded in the binary; no external file is needed.
 | [nlohmann/json](https://github.com/nlohmann/json) | bundled inside the ollama-hpp header | JSON serialization/deserialization |
 | [fmt](https://github.com/fmtlib/fmt) | via vcpkg ≥ 12.1.0 | String formatting |
 | [llama.cpp](https://github.com/ggml-org/llama.cpp) | via vcpkg ≥ 7146 | Local inference with GGUF models |
+| `hailo_http_client.h` | header-only in `includes/third_party/` | Lightweight POSIX HTTP client for hailo-ollama (no TLS, no external dependencies) |
 | [instruction_following_eval](https://github.com/google-research/google-research/tree/master/instruction_following_eval) | Google Research | Prompt dataset used in tests |
 
 ---

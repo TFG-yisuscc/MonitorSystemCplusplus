@@ -5,9 +5,11 @@
 #include "utils/inputConfiguration.h"
 
 #include <stdexcept>
+#include <unordered_map>
 
 #include "clients/LlamaTest.h"
 #include "clients/OllamaTest.h"
+#include "clients/haoiloOllamaTest.h"
 
 void InputConfiguration::validate() const {
     if (temperature_ < 0.0f)
@@ -16,14 +18,14 @@ void InputConfiguration::validate() const {
         throw std::invalid_argument("batch_size no puede ser negativo (valor: " + std::to_string(batch_size_) + ")");
     if (context_size_ < 0)
         throw std::invalid_argument("context_size no puede ser negativo (valor: " + std::to_string(context_size_) + ")");
-    if (seed_ < 0)
-        throw std::invalid_argument("seed no puede ser negativa (valor: " + std::to_string(seed_) + ")");
     if (hardwarePeriod <= 0.0f)
         throw std::invalid_argument("hardware_period debe ser mayor que cero (valor: " + std::to_string(hardwarePeriod) + ")");
     if (num_prompts_ < 1 || num_prompts_ > 541)
         throw std::invalid_argument("num_prompts debe estar entre 1 y 541 (valor: " + std::to_string(num_prompts_) + ")");
     if (inferenceEngine_ == InferenceEngines::OTHER)
         throw std::invalid_argument("El motor de inferencia OTHER no esta soportado");
+    if (inferenceEngine_ == InferenceEngines::HAILO_OLLAMA && hailo_server_port_ <= 0)
+        throw std::invalid_argument("hailo_server_port debe ser mayor que cero");
 }
 
 InputConfiguration::InputConfiguration(nlohmann::json json_config) {
@@ -46,6 +48,8 @@ InputConfiguration::InputConfiguration(nlohmann::json json_config) {
             annotations = "EMPTY";
         }
         ollama_url_ = json_config.value("ollama_url", "http://localhost:11434");
+        hailo_server_host_ = json_config.value("hailo_server_host", std::string("localhost"));
+        hailo_server_port_ = json_config.value("hailo_server_port", 8000);
         og_config_json = json_config.dump();
         hardwarePeriod = json_config.at("hardware_period").get<float>();
     } catch (const nlohmann::json::exception& e) {
@@ -73,6 +77,9 @@ void InputConfiguration::run() {
             break;
         case InferenceEngines::LLAMA:
             runLlama();
+            break;
+        case InferenceEngines::HAILO_OLLAMA:
+            runHailoOllama();
             break;
         default:
             throw std::invalid_argument("Invalid inference engine selected.");
@@ -189,16 +196,36 @@ static nlohmann::json fetchLlamaModelInfo(const std::string& model_path) {
                 : nlohmann::json(nullptr);
         }
 
-        // Quantization from filename (convention: stem ends in .Q4_0 etc.)
-        auto stem = std::filesystem::path(model_path).stem().string();
-        auto dot  = stem.rfind('.');
-        if (dot != std::string::npos) {
-            info["quantization"] = stem.substr(dot + 1);
-        } else {
+        // Quantization: read general.file_type from GGUF metadata (llama_ftype enum)
+        static const std::unordered_map<int, std::string> ftype_names = {
+            {0,  "F32"},     {1,  "F16"},     {2,  "Q4_0"},    {3,  "Q4_1"},
+            {7,  "Q8_0"},    {8,  "Q5_0"},    {9,  "Q5_1"},    {10, "Q2_K"},
+            {11, "Q3_K_S"},  {12, "Q3_K_M"},  {13, "Q3_K_L"},  {14, "Q4_K_S"},
+            {15, "Q4_K_M"},  {16, "Q5_K_S"},  {17, "Q5_K_M"},  {18, "Q6_K"},
+            {19, "IQ2_XXS"}, {20, "IQ2_XS"},  {21, "Q2_K_S"},  {22, "IQ3_XS"},
+            {23, "IQ3_XXS"}, {24, "IQ1_S"},   {25, "IQ4_NL"},  {26, "IQ3_S"},
+            {27, "IQ3_M"},   {28, "IQ2_S"},   {29, "IQ2_M"},   {30, "IQ4_XS"},
+            {31, "IQ1_M"},   {32, "BF16"},    {36, "TQ1_0"},   {37, "TQ2_0"},
+            {38, "MXFP4_MOE"},
+        };
+        bool quant_found = false;
+        if (llama_model_meta_val_str(model, "general.file_type", buf, sizeof(buf)) > 0) {
+            try {
+                int ftype = std::stoi(buf);
+                auto it = ftype_names.find(ftype);
+                if (it != ftype_names.end()) {
+                    info["quantization"] = it->second;
+                    quant_found = true;
+                }
+            } catch (...) {}
+        }
+        if (!quant_found) {
+            // Fallback: extract suffix after last '-' in stem if it looks like a quant tag
+            auto stem = std::filesystem::path(model_path).stem().string();
             auto dash = stem.rfind('-');
             if (dash != std::string::npos) {
                 auto suf = stem.substr(dash + 1);
-                if (!suf.empty() && (suf[0] == 'Q' || suf[0] == 'F' || suf[0] == 'I'))
+                if (!suf.empty() && (suf[0] == 'Q' || suf[0] == 'F' || suf[0] == 'I' || suf[0] == 'B' || suf[0] == 'T'))
                     info["quantization"] = suf;
                 else
                     info["quantization"] = "unknown";
@@ -210,6 +237,26 @@ static nlohmann::json fetchLlamaModelInfo(const std::string& model_path) {
 
     llama_model_free(model);
     return info;
+}
+
+void InputConfiguration::runHailoOllama() {
+    model_info_ = nullptr; // hailo no expone metadata estructurada via /api/show
+    HaoiloOllamaTest hailoTest(model_path_or_name_, run_path_, temperature_,
+                               seed_, num_prompts_, /*num_predict=*/512,
+                               hardwarePeriod, hailo_server_host_, hailo_server_port_);
+    switch (testType_) {
+        case TestType::TYPE_0:
+            hailoTest.runTestType0();
+            break;
+        case TestType::TYPE_1:
+            hailoTest.runTestType1();
+            break;
+        case TestType::TYPE_2:
+            hailoTest.runTestType1_5seg();
+            break;
+        default:
+            throw std::invalid_argument("Invalid test type selected for HAILO_OLLAMA.");
+    }
 }
 
 void InputConfiguration::runOllama() {
@@ -282,6 +329,10 @@ void InputConfiguration::createResumen() {
     resumen["temperature"] = temperature_;
     resumen["model_path_or_name"] = model_path_or_name_;
     resumen["hardware_period"] = hardwarePeriod;
+    if (inferenceEngine_ == InferenceEngines::HAILO_OLLAMA) {
+        resumen["hailo_server_host"] = hailo_server_host_;
+        resumen["hailo_server_port"] = hailo_server_port_;
+    }
     resumen["timestamp_run_start"] = timestamp_run_start;
     resumen["timestamp_run_end"] = timestamp_run_end;
 

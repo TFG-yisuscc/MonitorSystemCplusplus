@@ -69,6 +69,7 @@ namespace metrics {
 
         ~promptmetrics() = default;
         static promptmetrics from_Ollama_json( nlohmann::json json,int64_t start_timestamp,int64_t finish_timestamp, int prompt_id);
+        static promptmetrics from_HailoOllama_json(nlohmann::json json, int64_t start_timestamp, int64_t finish_timestamp, int prompt_id);
         static promptmetrics from_Llama(LlamaLoadTimestamps llt, LlamaGenerateResult llg, int prompt_id);
         static promptmetrics from_Llama( LlamaGenerateResult llg, int prompt_id);// esta loadtimes o
     };
