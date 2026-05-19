@@ -145,18 +145,22 @@ int hardwareMetrics::getCpuCores() {
     return cores;
 }
 std::vector<double> hardwareMetrics::getCpuFrequencies() {
+    // da igual porque los cores están vinculados
+    //a la misma frecuencia
     const static int cores = getCpuCores();
     std::vector<double> freqs(cores);
-    for (int i = 0; i < cores; ++i) {
-        std::string path = "/sys/devices/system/cpu/cpu"
-                         + std::to_string(i)
-                         + "/cpufreq/scaling_cur_freq";
-        std::ifstream f(path);
-        if (f.is_open()) {
-            long val = 0;
-            f >> val;
-            freqs[i] = val / 1e6; // MHz
-        } else {
+
+    std::string cmd_output = execCommand("vcgencmd measure_clock arm");
+    // Parse "frequency(45)=1500000000\n" → 1.5 GHz
+    auto eq_pos = cmd_output.find('=');
+    if (eq_pos != std::string::npos) {
+        long hz = std::stol(cmd_output.substr(eq_pos + 1));
+        double ghz = hz / 1e9;
+        for (int i = 0; i < cores; ++i) {
+            freqs[i] = ghz;
+        }
+    } else {
+        for (int i = 0; i < cores; ++i) {
             freqs[i] = 0.0;
         }
     }

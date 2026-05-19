@@ -65,12 +65,12 @@ void OllamaTest::ensureModelAvailable() {
 
 // funciones de test
 bool OllamaTest::runTestType0() {
-    ollama::setConnectionTimeout(3600);
-    ollama::setReadTimeout(3600);
-    ollama::setWriteTimeout(3600);
+    ollama::setConnectionTimeout(3600*5);
+    ollama::setReadTimeout(3600*5);
+    ollama::setWriteTimeout(3600*5);
     ensureModelAvailable();
-    ollama::show_requests(true);
-    ollama::show_replies(true);
+    // ollama::show_requests(true);
+    // ollama::show_replies(true);
     // obtenemos los prompts
     promptParser parser2 = promptParser();
     std::vector<std::string> prompts = parser2.getPrompts();
@@ -95,9 +95,9 @@ bool OllamaTest::runTestType0() {
 }
 
 bool OllamaTest::runTestType1() {
-    ollama::setConnectionTimeout(3600);
-    ollama::setReadTimeout(3600);
-    ollama::setWriteTimeout(3600);
+    ollama::setConnectionTimeout(3600*5);
+    ollama::setReadTimeout(3600*5);
+    ollama::setWriteTimeout(3600*5);
     ensureModelAvailable();
     promptParser parser2 = promptParser();
     std::vector<std::string> prompts = parser2.getPrompts();
@@ -133,9 +133,9 @@ bool OllamaTest::runTestType1() {
     return true;
 }
 bool OllamaTest::runTestType1_5seg() {
-    ollama::setConnectionTimeout(3600);
-    ollama::setReadTimeout(3600);
-    ollama::setWriteTimeout(3600);
+    ollama::setConnectionTimeout(3600*5);
+    ollama::setReadTimeout(3600*5);
+    ollama::setWriteTimeout(3600*5);
     ensureModelAvailable();
     promptParser parser2 = promptParser();
     std::vector<std::string> prompts = parser2.getPrompts();

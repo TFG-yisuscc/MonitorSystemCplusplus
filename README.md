@@ -86,7 +86,7 @@ results/
 **`*_hw_metrics_*.jsonl`** — una línea JSON por muestra con:
 - `timestamp_` — timestamp de la muestra (ns)
 - `temperature_` — temperatura de la CPU (°C)
-- `frequency_` — frecuencia por núcleo (Hz)
+- `frequency_` — frecuencia por núcleo (GHz)
 - `voltage_` — tensión del núcleo (V)
 - `fan_speed_` — velocidad del ventilador (RPM)
 - `internalpower_` — consumo de potencia interno (W) **¹**
