@@ -193,18 +193,42 @@ double hardwareMetrics::getCoreVoltage() {
 }
 
 long hardwareMetrics::getFanSpeed() {
-        for (const auto& entry : std::filesystem::directory_iterator("/sys/class/hwmon")) {
-            // fan1_input contiene las RPM directamente
-            auto path = entry.path() / "fan1_input";
-            if (std::filesystem::exists(path)) {
-                std::ifstream f(path);
+    // Drivers conocidos del ventilador de la Pi 5 (Active Cooler usa pwm-fan)
+    static const std::vector<std::string> preferred_names = {"pwm-fan", "rpi-hwmon", "cooling_fan"};
+
+    std::string fallback_path;
+
+    for (const auto& entry : std::filesystem::directory_iterator("/sys/class/hwmon")) {
+        auto fan_path = entry.path() / "fan1_input";
+        if (!std::filesystem::exists(fan_path))
+            continue;
+
+        std::string dev_name;
+        if (std::ifstream nf(entry.path() / "name"); nf)
+            std::getline(nf, dev_name);
+
+        for (const auto& pref : preferred_names) {
+            if (dev_name.find(pref) != std::string::npos) {
+                std::ifstream f(fan_path);
                 long rpm;
                 f >> rpm;
                 return rpm;
             }
         }
-        return 0;
+
+        if (fallback_path.empty())
+            fallback_path = fan_path.string();
     }
+
+    if (!fallback_path.empty()) {
+        std::ifstream f(fallback_path);
+        long rpm;
+        f >> rpm;
+        return rpm;
+    }
+
+    return 0;
+}
 
 throttlingInfo hardwareMetrics::getThrottlingInfo() {
     // con exec command

@@ -4,6 +4,7 @@
 
 #include "utils/inputConfiguration.h"
 
+#include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -89,6 +90,42 @@ void InputConfiguration::run() {
     // creamos el resumen y lo metemos en la carpeta con el resto de resumenes
     createResumen();
 }
+// Lee n_kv_heads de un GGUF sin cargar pesos (vocab_only).
+// Necesario cuando Ollama devuelve null para head_count_kv (modelos híbridos).
+static int64_t ggufNkvHeads(const std::string& path) {
+    std::error_code ec;
+    if (!std::filesystem::exists(path, ec) || ec) return -1;
+    llama_backend_init();
+    llama_model_params params = llama_model_default_params();
+    params.n_gpu_layers = 0;
+    params.vocab_only   = true;
+    llama_model* m = llama_model_load_from_file(path.c_str(), params);
+    if (!m) return -1;
+    char buf[4096];
+    int64_t result = -1;
+    std::string arch = "unknown";
+    if (llama_model_meta_val_str(m, "general.architecture", buf, sizeof(buf)) >= 0)
+        arch = std::string(buf);
+    const std::string key = arch + ".attention.head_count_kv";
+    if (llama_model_meta_val_str(m, key.c_str(), buf, sizeof(buf)) > 0) {
+        try { result = std::stoll(buf); }
+        catch (...) {
+            int64_t max_val = 0;
+            for (const char* p = buf; *p; ++p) {
+                if (std::isdigit(static_cast<unsigned char>(*p))) {
+                    char* end;
+                    int64_t v = std::strtoll(p, &end, 10);
+                    if (v > max_val) max_val = v;
+                    p = (end > p) ? end - 1 : p;
+                }
+            }
+            if (max_val > 0) result = max_val;
+        }
+    }
+    llama_model_free(m);
+    return result;
+}
+
 static nlohmann::json extractOllamaModelInfo(const nlohmann::json& show_response) {
     nlohmann::json info = nlohmann::json::object();
     std::string arch = "unknown";
@@ -111,13 +148,46 @@ static nlohmann::json extractOllamaModelInfo(const nlohmann::json& show_response
         auto try_key = [&](const std::string& key, const std::string& field) {
             if (mi.contains(key)) info[field] = mi[key];
         };
+        // head_count_kv puede ser array JSON en modelos híbridos → tomar el máximo valor no-cero
+        auto try_key_or_array_max = [&](const std::string& key, const std::string& field) {
+            if (!mi.contains(key)) return;
+            const auto& v = mi[key];
+            if (v.is_number()) { info[field] = v; return; }
+            if (v.is_array()) {
+                int64_t max_val = 0;
+                for (const auto& el : v)
+                    if (el.is_number()) max_val = std::max(max_val, el.get<int64_t>());
+                if (max_val > 0) info[field] = max_val;
+            }
+        };
         try_key(arch + ".embedding_length",        "embedding_length");
         try_key(arch + ".block_count",             "n_layers");
         try_key(arch + ".context_length",          "max_context");
         try_key(arch + ".attention.head_count",    "n_heads");
-        try_key(arch + ".attention.head_count_kv", "n_kv_heads");
+        try_key_or_array_max(arch + ".attention.head_count_kv", "n_kv_heads");
     } else {
         info["architecture"] = arch;
+    }
+
+    // Fallback para modelos híbridos: Ollama devuelve null para head_count_kv.
+    // Extraemos la ruta del GGUF del campo modelfile y lo leemos directamente.
+    if (!info.contains("n_kv_heads") && show_response.contains("modelfile")
+            && show_response["modelfile"].is_string()) {
+        const std::string& mf = show_response["modelfile"].get<std::string>();
+        std::istringstream ss(mf);
+        std::string line, gguf_path;
+        while (std::getline(ss, line)) {
+            if (line.rfind("FROM ", 0) == 0) {
+                gguf_path = line.substr(5);
+                while (!gguf_path.empty() && (gguf_path.back() == '\r' || gguf_path.back() == ' '))
+                    gguf_path.pop_back();
+                break;
+            }
+        }
+        if (!gguf_path.empty()) {
+            int64_t nkv = ggufNkvHeads(gguf_path);
+            if (nkv > 0) info["n_kv_heads"] = nkv;
+        }
     }
 
     if (show_response.contains("details")) {
@@ -177,11 +247,29 @@ static nlohmann::json fetchLlamaModelInfo(const std::string& model_path) {
                 try { info[field] = (int64_t)std::stoll(buf); } catch (...) {}
             }
         };
+        // head_count_kv puede ser array en modelos híbridos (ej. granitehybrid):
+        // "[0, 0, 8, 8, ...]" → capas SSM tienen 0, capas de atención tienen N.
+        // Tomamos el máximo valor no-cero del array.
+        auto try_int_meta_or_array_max = [&](const std::string& key, const std::string& field) {
+            if (llama_model_meta_val_str(model, key.c_str(), buf, sizeof(buf)) > 0) {
+                try { info[field] = (int64_t)std::stoll(buf); return; } catch (...) {}
+                int64_t max_val = 0;
+                for (const char* p = buf; *p; ++p) {
+                    if (std::isdigit(static_cast<unsigned char>(*p))) {
+                        char* end;
+                        int64_t v = std::strtoll(p, &end, 10);
+                        if (v > max_val) max_val = v;
+                        p = (end > p) ? end - 1 : p;
+                    }
+                }
+                if (max_val > 0) info[field] = max_val;
+            }
+        };
         try_int_meta(arch + ".embedding_length",          "embedding_length");
         try_int_meta(arch + ".block_count",               "n_layers");
         try_int_meta(arch + ".context_length",            "max_context");
         try_int_meta(arch + ".attention.head_count",      "n_heads");
-        try_int_meta(arch + ".attention.head_count_kv",   "n_kv_heads");
+        try_int_meta_or_array_max(arch + ".attention.head_count_kv", "n_kv_heads");
 
         // bits_per_weight: file_size_bytes * 8 / n_params
         {
