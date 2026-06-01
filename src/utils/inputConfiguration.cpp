@@ -92,37 +92,81 @@ void InputConfiguration::run() {
 }
 // Lee n_kv_heads de un GGUF sin cargar pesos (vocab_only).
 // Necesario cuando Ollama devuelve null para head_count_kv (modelos híbridos).
+// Parser mínimo de GGUF para leer head_count_kv cuando es un array por capas.
+// llama_model_meta_val_str no soporta arrays (documentado en llama.h).
 static int64_t ggufNkvHeads(const std::string& path) {
-    std::error_code ec;
-    if (!std::filesystem::exists(path, ec) || ec) return -1;
-    llama_backend_init();
-    llama_model_params params = llama_model_default_params();
-    params.n_gpu_layers = 0;
-    params.vocab_only   = true;
-    llama_model* m = llama_model_load_from_file(path.c_str(), params);
-    if (!m) return -1;
-    char buf[4096];
+    std::ifstream f(path, std::ios::binary);
+    if (!f) return -1;
+
+    auto read_u32 = [&]() -> uint32_t {
+        uint32_t v{}; f.read(reinterpret_cast<char*>(&v), 4); return v;
+    };
+    auto read_u64 = [&]() -> uint64_t {
+        uint64_t v{}; f.read(reinterpret_cast<char*>(&v), 8); return v;
+    };
+    auto read_str = [&]() -> std::string {
+        uint64_t len = read_u64();
+        if (len > 1u << 20) { f.seekg(len, std::ios::cur); return {}; } // salta strings muy largas
+        std::string s(len, '\0');
+        f.read(s.data(), len);
+        return s;
+    };
+
+    // Cabecera GGUF
+    char magic[4]; f.read(magic, 4);
+    if (std::string(magic, 4) != "GGUF") return -1;
+    uint32_t version = read_u32();
+    if (version < 2 || version > 4) return -1;
+    read_u64(); // n_tensors (ignorado)
+    uint64_t n_kv = read_u64();
+
+    // Tamaños de tipos escalares GGUF
+    static const int type_size[] = {1,1,2,2,4,4,4,1,0,0,8,8,8}; // índice = tipo
+
+    std::string arch;
     int64_t result = -1;
-    std::string arch = "unknown";
-    if (llama_model_meta_val_str(m, "general.architecture", buf, sizeof(buf)) >= 0)
-        arch = std::string(buf);
-    const std::string key = arch + ".attention.head_count_kv";
-    if (llama_model_meta_val_str(m, key.c_str(), buf, sizeof(buf)) > 0) {
-        try { result = std::stoll(buf); }
-        catch (...) {
-            int64_t max_val = 0;
-            for (const char* p = buf; *p; ++p) {
-                if (std::isdigit(static_cast<unsigned char>(*p))) {
-                    char* end;
-                    int64_t v = std::strtoll(p, &end, 10);
-                    if (v > max_val) max_val = v;
-                    p = (end > p) ? end - 1 : p;
-                }
+    std::string target_key; // se fija cuando conocemos arch
+
+    for (uint64_t i = 0; i < n_kv && f.good(); ++i) {
+        std::string key = read_str();
+        uint32_t vtype = read_u32();
+
+        if (vtype == 8) { // STRING
+            std::string val = read_str();
+            if (key == "general.architecture") {
+                arch = val;
+                target_key = arch + ".attention.head_count_kv";
             }
-            if (max_val > 0) result = max_val;
+        } else if (vtype == 9) { // ARRAY
+            uint32_t atype  = read_u32();
+            uint64_t acount = read_u64();
+            if (key == target_key && atype >= 0 && atype <= 5) {
+                // Array de enteros: buscar el máximo valor no-cero
+                int64_t max_val = 0;
+                int esz = type_size[atype];
+                for (uint64_t j = 0; j < acount && f.good(); ++j) {
+                    int64_t v = 0;
+                    if      (esz == 4) { uint32_t u; f.read(reinterpret_cast<char*>(&u), 4); v = u; }
+                    else if (esz == 8) { uint64_t u; f.read(reinterpret_cast<char*>(&u), 8); v = u; }
+                    else if (esz == 2) { uint16_t u; f.read(reinterpret_cast<char*>(&u), 2); v = u; }
+                    else if (esz == 1) { uint8_t  u; f.read(reinterpret_cast<char*>(&u), 1); v = u; }
+                    if (v > max_val) max_val = v;
+                }
+                if (max_val > 0) result = max_val;
+                break;
+            } else if (atype == 8) { // ARRAY of strings: saltar
+                for (uint64_t j = 0; j < acount && f.good(); ++j) read_str();
+            } else if (atype < 13 && type_size[atype] > 0) {
+                f.seekg(acount * type_size[atype], std::ios::cur);
+            } else {
+                break; // tipo desconocido, abortar
+            }
+        } else if (vtype < 13 && type_size[vtype] > 0) {
+            f.seekg(type_size[vtype], std::ios::cur);
+        } else {
+            break; // tipo desconocido
         }
     }
-    llama_model_free(m);
     return result;
 }
 
@@ -247,29 +291,16 @@ static nlohmann::json fetchLlamaModelInfo(const std::string& model_path) {
                 try { info[field] = (int64_t)std::stoll(buf); } catch (...) {}
             }
         };
-        // head_count_kv puede ser array en modelos híbridos (ej. granitehybrid):
-        // "[0, 0, 8, 8, ...]" → capas SSM tienen 0, capas de atención tienen N.
-        // Tomamos el máximo valor no-cero del array.
-        auto try_int_meta_or_array_max = [&](const std::string& key, const std::string& field) {
-            if (llama_model_meta_val_str(model, key.c_str(), buf, sizeof(buf)) > 0) {
-                try { info[field] = (int64_t)std::stoll(buf); return; } catch (...) {}
-                int64_t max_val = 0;
-                for (const char* p = buf; *p; ++p) {
-                    if (std::isdigit(static_cast<unsigned char>(*p))) {
-                        char* end;
-                        int64_t v = std::strtoll(p, &end, 10);
-                        if (v > max_val) max_val = v;
-                        p = (end > p) ? end - 1 : p;
-                    }
-                }
-                if (max_val > 0) info[field] = max_val;
-            }
-        };
         try_int_meta(arch + ".embedding_length",          "embedding_length");
         try_int_meta(arch + ".block_count",               "n_layers");
         try_int_meta(arch + ".context_length",            "max_context");
         try_int_meta(arch + ".attention.head_count",      "n_heads");
-        try_int_meta_or_array_max(arch + ".attention.head_count_kv", "n_kv_heads");
+        try_int_meta(arch + ".attention.head_count_kv",   "n_kv_heads");
+        // llama_model_meta_val_str no soporta arrays: fallback con parser GGUF propio
+        if (!info.contains("n_kv_heads")) {
+            int64_t nkv = ggufNkvHeads(model_path);
+            if (nkv > 0) info["n_kv_heads"] = nkv;
+        }
 
         // bits_per_weight: file_size_bytes * 8 / n_params
         {
