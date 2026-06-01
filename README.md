@@ -108,7 +108,11 @@ results/
 - [vcpkg](https://github.com/microsoft/vcpkg) con las siguientes dependencias:
   - `llama-cpp` ≥ 7146
   - `fmt` ≥ 12.1.0
-- Para el motor **OLLAMA**: [Ollama](https://ollama.com) instalado y ejecutándose en el sistema
+- Para el motor **OLLAMA**: [Ollama](https://ollama.com) instalado y ejecutándose en el sistema. Para que el monitor pueda leer los metadatos completos de modelos híbridos (p. ej. Granite 4.0 H), el usuario debe tener acceso de lectura a los blobs de Ollama:
+  ```bash
+  sudo usermod -aG ollama $USER
+  # Cerrar sesión y volver a iniciarla para que surta efecto
+  ```
 - Para el motor **HAILO_OLLAMA**: servidor [hailo-ollama](https://github.com/hailo-ai/hailo_model_zoo_genai) accesible en red (por defecto `localhost:8000`)
 
 ### Compilar

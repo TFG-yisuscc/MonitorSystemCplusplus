@@ -108,7 +108,11 @@ results/
 - [vcpkg](https://github.com/microsoft/vcpkg) with the following dependencies:
   - `llama-cpp` ≥ 7146
   - `fmt` ≥ 12.1.0
-- For the **OLLAMA** engine: [Ollama](https://ollama.com) installed and running on the system
+- For the **OLLAMA** engine: [Ollama](https://ollama.com) installed and running on the system. For the monitor to read full metadata from hybrid models (e.g. Granite 4.0 H), the user needs read access to Ollama's blob storage:
+  ```bash
+  sudo usermod -aG ollama $USER
+  # Log out and back in for the change to take effect
+  ```
 - For the **HAILO_OLLAMA** engine: [hailo-ollama](https://github.com/hailo-ai/hailo_model_zoo_genai) server reachable over the network (default `localhost:8000`)
 
 ### Build
